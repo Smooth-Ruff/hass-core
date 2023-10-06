@@ -332,7 +332,7 @@ class PassiveBluetoothProcessorCoordinator(
     def _async_handle_bluetooth_event(
         self,
         service_info: BluetoothServiceInfoBleak,
-        change: BluetoothChange,
+        _: BluetoothChange,
     ) -> None:
         """Handle a Bluetooth event."""
         was_available = self._available
@@ -626,8 +626,6 @@ class PassiveBluetoothProcessorEntity(Entity, Generic[_PassiveBluetoothDataProce
         )
 
     @callback
-    def _handle_processor_update(
-        self, new_data: PassiveBluetoothDataUpdate | None
-    ) -> None:
+    def _handle_processor_update(self, _: PassiveBluetoothDataUpdate | None) -> None:
         """Handle updated data from the processor."""
         self.async_write_ha_state()

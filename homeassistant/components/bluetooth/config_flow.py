@@ -136,9 +136,7 @@ class BluetoothConfigFlow(ConfigFlow, domain=DOMAIN):
             ),
         )
 
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    async def async_step_user(self, _: dict[str, Any] | None = None) -> FlowResult:
         """Handle a flow initialized by the user."""
         return await self.async_step_multiple_adapters()
 
@@ -152,6 +150,6 @@ class BluetoothConfigFlow(ConfigFlow, domain=DOMAIN):
 
     @classmethod
     @callback
-    def async_supports_options_flow(cls, config_entry: ConfigEntry) -> bool:
+    def async_supports_options_flow(cls, _: ConfigEntry) -> bool:
         """Return options flow support for this handler."""
         return bool(models.MANAGER and models.MANAGER.supports_passive_scan)

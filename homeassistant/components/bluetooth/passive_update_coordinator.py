@@ -78,8 +78,8 @@ class PassiveBluetoothDataUpdateCoordinator(
     @callback
     def _async_handle_bluetooth_event(
         self,
-        service_info: BluetoothServiceInfoBleak,
-        change: BluetoothChange,
+        _: BluetoothServiceInfoBleak,
+        __: BluetoothChange,
     ) -> None:
         """Handle a Bluetooth event."""
         self._available = True

@@ -75,7 +75,7 @@ class HaBleakScannerWrapper(BaseBleakScanner):
         )
 
     @classmethod
-    async def discover(cls, timeout: float = 5.0, **kwargs: Any) -> list[BLEDevice]:
+    async def discover(cls, _: float = 5.0, **kwargs: Any) -> list[BLEDevice]:
         """Discover devices."""
         assert models.MANAGER is not None
         return list(models.MANAGER.async_discovered_devices(True))

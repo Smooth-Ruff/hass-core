@@ -116,7 +116,7 @@ class BaseHaScanner(ABC):
         return time_since_last_detection > SCANNER_WATCHDOG_TIMEOUT
 
     @hass_callback
-    def _async_scanner_watchdog(self, now: datetime.datetime) -> None:
+    def _async_scanner_watchdog(self, _: datetime.datetime) -> None:
         """Check if the scanner is running.
 
         Override this method if you need to do something else when the watchdog
@@ -250,7 +250,7 @@ class BaseHaRemoteScanner(BaseHaScanner):
         return _cancel
 
     @hass_callback
-    def _async_save_history(self, event: Event | None = None) -> None:
+    def _async_save_history(self, _: Event | None = None) -> None:
         """Save the history."""
         self._storage.async_set_advertisement_history(
             self.source,

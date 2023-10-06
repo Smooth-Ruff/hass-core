@@ -6,6 +6,7 @@ import logging
 from oralb_ble import OralBBluetoothDeviceData
 
 from homeassistant.components.bluetooth import (
+    ActiveBluetoothUpdateArgs,
     BluetoothScanningMode,
     BluetoothServiceInfoBleak,
     async_ble_device_from_address,
@@ -67,17 +68,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = hass.data.setdefault(DOMAIN, {})[
         entry.entry_id
     ] = ActiveBluetoothProcessorCoordinator(
-        hass,
-        _LOGGER,
-        address=address,
-        mode=BluetoothScanningMode.PASSIVE,
+        activeBluetoothArgs=ActiveBluetoothUpdateArgs(
+            hass,
+            _LOGGER,
+            address=address,
+            mode=BluetoothScanningMode.PASSIVE,
+            connectable=False,
+        ),
         update_method=data.update,
         needs_poll_method=_needs_poll,
         poll_method=_async_poll,
         # We will take advertisements from non-connectable devices
         # since we will trade the BLEDevice for a connectable one
         # if we need to poll it
-        connectable=False,
     )
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(

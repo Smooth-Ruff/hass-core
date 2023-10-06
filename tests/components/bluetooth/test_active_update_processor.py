@@ -10,6 +10,7 @@ import pytest
 
 from homeassistant.components.bluetooth import (
     DOMAIN,
+    ActiveBluetoothUpdateArgs,
     BluetoothScanningMode,
     BluetoothServiceInfoBleak,
 )
@@ -66,10 +67,12 @@ async def test_basic_usage(
         return {"testdata": 1}
 
     coordinator = ActiveBluetoothProcessorCoordinator(
-        hass,
-        _LOGGER,
-        address="aa:bb:cc:dd:ee:ff",
-        mode=BluetoothScanningMode.ACTIVE,
+        activeBluetoothArgs=ActiveBluetoothUpdateArgs(
+            hass,
+            _LOGGER,
+            address="aa:bb:cc:dd:ee:ff",
+            mode=BluetoothScanningMode.ACTIVE,
+        ),
         update_method=_update_method,
         needs_poll_method=_poll_needed,
         poll_method=_poll,
@@ -118,10 +121,12 @@ async def test_poll_can_be_skipped(
         return {"testdata": flag}
 
     coordinator = ActiveBluetoothProcessorCoordinator(
-        hass,
-        _LOGGER,
-        address="aa:bb:cc:dd:ee:ff",
-        mode=BluetoothScanningMode.ACTIVE,
+        activeBluetoothArgs=ActiveBluetoothUpdateArgs(
+            hass,
+            _LOGGER,
+            address="aa:bb:cc:dd:ee:ff",
+            mode=BluetoothScanningMode.ACTIVE,
+        ),
         update_method=_update_method,
         needs_poll_method=_poll_needed,
         poll_method=_poll,
@@ -183,10 +188,12 @@ async def test_bleak_error_and_recover(
         return {"testdata": flag}
 
     coordinator = ActiveBluetoothProcessorCoordinator(
-        hass,
-        _LOGGER,
-        address="aa:bb:cc:dd:ee:ff",
-        mode=BluetoothScanningMode.ACTIVE,
+        activeBluetoothArgs=ActiveBluetoothUpdateArgs(
+            hass,
+            _LOGGER,
+            address="aa:bb:cc:dd:ee:ff",
+            mode=BluetoothScanningMode.ACTIVE,
+        ),
         update_method=_update_method,
         needs_poll_method=_poll_needed,
         poll_method=_poll,
@@ -247,10 +254,12 @@ async def test_poll_failure_and_recover(
         return {"testdata": flag}
 
     coordinator = ActiveBluetoothProcessorCoordinator(
-        hass,
-        _LOGGER,
-        address="aa:bb:cc:dd:ee:ff",
-        mode=BluetoothScanningMode.ACTIVE,
+        activeBluetoothArgs=ActiveBluetoothUpdateArgs(
+            hass,
+            _LOGGER,
+            address="aa:bb:cc:dd:ee:ff",
+            mode=BluetoothScanningMode.ACTIVE,
+        ),
         update_method=_update_method,
         needs_poll_method=_poll_needed,
         poll_method=_poll,
@@ -307,10 +316,12 @@ async def test_second_poll_needed(
         return {"testdata": count}
 
     coordinator = ActiveBluetoothProcessorCoordinator(
-        hass,
-        _LOGGER,
-        address="aa:bb:cc:dd:ee:ff",
-        mode=BluetoothScanningMode.ACTIVE,
+        activeBluetoothArgs=ActiveBluetoothUpdateArgs(
+            hass,
+            _LOGGER,
+            address="aa:bb:cc:dd:ee:ff",
+            mode=BluetoothScanningMode.ACTIVE,
+        ),
         update_method=_update_method,
         needs_poll_method=_poll_needed,
         poll_method=_poll,
@@ -357,10 +368,12 @@ async def test_rate_limit(
         return {"testdata": count}
 
     coordinator = ActiveBluetoothProcessorCoordinator(
-        hass,
-        _LOGGER,
-        address="aa:bb:cc:dd:ee:ff",
-        mode=BluetoothScanningMode.ACTIVE,
+        activeBluetoothArgs=ActiveBluetoothUpdateArgs(
+            hass,
+            _LOGGER,
+            address="aa:bb:cc:dd:ee:ff",
+            mode=BluetoothScanningMode.ACTIVE,
+        ),
         update_method=_update_method,
         needs_poll_method=_poll_needed,
         poll_method=_poll,
@@ -407,10 +420,12 @@ async def test_no_polling_after_stop_event(
         return {"testdata": 1}
 
     coordinator = ActiveBluetoothProcessorCoordinator(
-        hass,
-        _LOGGER,
-        address="aa:bb:cc:dd:ee:ff",
-        mode=BluetoothScanningMode.ACTIVE,
+        activeBluetoothArgs=ActiveBluetoothUpdateArgs(
+            hass,
+            _LOGGER,
+            address="aa:bb:cc:dd:ee:ff",
+            mode=BluetoothScanningMode.ACTIVE,
+        ),
         update_method=_update_method,
         needs_poll_method=_poll_needed,
         poll_method=_poll,

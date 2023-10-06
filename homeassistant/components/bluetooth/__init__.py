@@ -129,7 +129,7 @@ async def _async_get_adapter_from_address(
     return await _get_manager(hass).async_get_adapter_from_address(address)
 
 
-async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+async def async_setup(hass: HomeAssistant, _: ConfigType) -> bool:
     """Set up the bluetooth integration."""
     await passive_update_processor.async_setup(hass)
     integration_matcher = IntegrationMatcher(await async_get_bluetooth(hass))
@@ -170,7 +170,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _async_shutdown_debouncer)
 
-    async def _async_call_debouncer(now: datetime.datetime) -> None:
+    async def _async_call_debouncer(_: datetime.datetime) -> None:
         """Call the debouncer at a later time."""
         await discovery_debouncer.async_call()
 
@@ -199,7 +199,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     cancel = usb.async_register_scan_request_callback(hass, _async_trigger_discovery)
     hass.bus.async_listen_once(
-        EVENT_HOMEASSISTANT_STOP, hass_callback(lambda event: cancel())
+        EVENT_HOMEASSISTANT_STOP, hass_callback(lambda _: cancel())
     )
 
     async_delete_issue(hass, DOMAIN, "haos_outdated")
@@ -312,3 +312,19 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     scanner: HaScanner = hass.data[DOMAIN].pop(entry.entry_id)
     await scanner.async_stop()
     return True
+
+
+class ActiveBluetoothUpdateArgs:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        logger: logging.Logger,
+        address: str,
+        mode: BluetoothScanningMode,
+        connectable: bool = True,
+    ) -> None:
+        self.hass = hass
+        self.logger = logger
+        self.address = address
+        self.connectable = connectable
+        self.mode = mode

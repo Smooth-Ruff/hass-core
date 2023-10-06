@@ -26,7 +26,7 @@ from .manager import ESPHomeManager, cleanup_instance
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
-async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:
     """Set up the esphome component."""
     await async_setup_dashboard(hass)
     return True

@@ -64,7 +64,7 @@ class EsphomeCamera(Camera, EsphomeEntity[CameraInfo, CameraState]):
         self._set_futures(True)
 
     async def async_camera_image(
-        self, width: int | None = None, height: int | None = None
+        self, _width: int | None = None, _height: int | None = None
     ) -> bytes | None:
         """Return single camera image bytes."""
         return await self._async_request_image(self._client.request_single_image)

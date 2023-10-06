@@ -69,7 +69,7 @@ class EsphomeLock(EsphomeEntity[LockInfo, LockEntityState], LockEntity):
         """Return true if the lock is jammed (incomplete locking)."""
         return self._state.state == LockState.JAMMED
 
-    async def async_lock(self, **kwargs: Any) -> None:
+    async def async_lock(self, **_kwargs: Any) -> None:
         """Lock the lock."""
         await self._client.lock_command(self._key, LockCommand.LOCK)
 
@@ -78,6 +78,6 @@ class EsphomeLock(EsphomeEntity[LockInfo, LockEntityState], LockEntity):
         code = kwargs.get(ATTR_CODE, None)
         await self._client.lock_command(self._key, LockCommand.UNLOCK, code)
 
-    async def async_open(self, **kwargs: Any) -> None:
+    async def async_open(self, **_kwargs: Any) -> None:
         """Open the door latch."""
         await self._client.lock_command(self._key, LockCommand.OPEN)

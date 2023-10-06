@@ -42,6 +42,9 @@ async def async_setup_entry(
     )
 
 
+_API_VERSION_REQUIRED_MAJOR = 1
+_API_VERSION_MINIMUM_MINOR = 3
+
 _FAN_DIRECTIONS: EsphomeEnumMapper[FanDirection, str] = EsphomeEnumMapper(
     {
         FanDirection.FORWARD: DIRECTION_FORWARD,
@@ -56,7 +59,10 @@ class EsphomeFan(EsphomeEntity[FanInfo, FanState], FanEntity):
     @property
     def _supports_speed_levels(self) -> bool:
         api_version = self._api_version
-        return api_version.major == 1 and api_version.minor > 3
+        return (
+            api_version.major == _API_VERSION_REQUIRED_MAJOR
+            and api_version.minor > _API_VERSION_MINIMUM_MINOR
+        )
 
     async def async_set_percentage(self, percentage: int) -> None:
         """Set the speed percentage of the fan."""
@@ -91,7 +97,7 @@ class EsphomeFan(EsphomeEntity[FanInfo, FanState], FanEntity):
         """Turn on the fan."""
         await self._async_set_percentage(percentage)
 
-    async def async_turn_off(self, **kwargs: Any) -> None:
+    async def async_turn_off(self, **_kwargs: Any) -> None:
         """Turn off the fan."""
         await self._client.fan_command(key=self._key, state=False)
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, TypeVar
 
-from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
+from homeassistant.core import CALLBACK_TYPE, callback
 from homeassistant.helpers.update_coordinator import (
     BaseCoordinatorEntity,
     BaseDataUpdateCoordinatorProtocol,
@@ -13,9 +13,8 @@ from .update_coordinator import BasePassiveBluetoothCoordinator
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
-    import logging
 
-    from . import BluetoothChange, BluetoothScanningMode, BluetoothServiceInfoBleak
+    from . import BluetoothChange, BluetoothServiceInfoBleak, BluetoothUpdateArgs
 
 _PassiveBluetoothDataUpdateCoordinatorT = TypeVar(
     "_PassiveBluetoothDataUpdateCoordinatorT",
@@ -34,14 +33,18 @@ class PassiveBluetoothDataUpdateCoordinator(
 
     def __init__(
         self,
-        hass: HomeAssistant,
-        logger: logging.Logger,
-        address: str,
-        mode: BluetoothScanningMode,
-        connectable: bool = False,
+        bluetoothArgs: BluetoothUpdateArgs,
     ) -> None:
         """Initialize PassiveBluetoothDataUpdateCoordinator."""
-        super().__init__(hass, logger, address, mode, connectable)
+        super().__init__(
+            bluetoothArgs.hass,
+            bluetoothArgs.logger,
+            bluetoothArgs.address,
+            bluetoothArgs.mode,
+            bluetoothArgs.connectable,
+        )
+
+        self.bluetoothArgs = bluetoothArgs
         self._listeners: dict[CALLBACK_TYPE, tuple[CALLBACK_TYPE, object | None]] = {}
 
     @callback

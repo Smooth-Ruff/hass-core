@@ -71,13 +71,7 @@ class ActiveBluetoothDataUpdateCoordinator(
         poll_debouncer: Debouncer[Coroutine[Any, Any, None]] | None = None,
     ) -> None:
         """Initialize the coordinator."""
-        super().__init__(
-            bluetoothArgs.hass,
-            bluetoothArgs.logger,
-            bluetoothArgs.address,
-            bluetoothArgs.mode,
-            bluetoothArgs.connectable,
-        )
+        super().__init__(bluetoothArgs=bluetoothArgs)
         # It's None before the first successful update.
         # Set type to just T to remove annoying checks that data is not None
         # when it was already checked during setup.

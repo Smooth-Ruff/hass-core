@@ -35,7 +35,7 @@ def _get_manager(hass: HomeAssistant) -> BluetoothManager:
 
 
 @hass_callback
-def async_get_scanner(hass: HomeAssistant) -> HaBleakScannerWrapper:
+def async_get_scanner(_: HomeAssistant) -> HaBleakScannerWrapper:
     """Return a HaBleakScannerWrapper.
 
     This is a wrapper around our BleakScanner singleton that allows
@@ -116,7 +116,7 @@ def async_register_callback(
     hass: HomeAssistant,
     callback: BluetoothCallback,
     match_dict: BluetoothCallbackMatcher | None,
-    mode: BluetoothScanningMode,
+    _: BluetoothScanningMode,
 ) -> Callable[[], None]:
     """Register to receive a callback on bluetooth change.
 
@@ -134,7 +134,7 @@ async def async_process_advertisements(
     hass: HomeAssistant,
     callback: ProcessAdvertisementCallback,
     match_dict: BluetoothCallbackMatcher,
-    mode: BluetoothScanningMode,
+    _: BluetoothScanningMode,
     timeout: int,
 ) -> BluetoothServiceInfoBleak:
     """Process advertisements until callback returns true or timeout expires."""
@@ -142,7 +142,7 @@ async def async_process_advertisements(
 
     @hass_callback
     def _async_discovered_device(
-        service_info: BluetoothServiceInfoBleak, change: BluetoothChange
+        service_info: BluetoothServiceInfoBleak, _: BluetoothChange
     ) -> None:
         if not done.done() and callback(service_info):
             done.set_result(service_info)

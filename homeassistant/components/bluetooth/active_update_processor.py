@@ -54,7 +54,10 @@ class ActiveBluetoothProcessorCoordinator(
     your poll function, as it is the most efficient way to get a BleakClient.
     """
 
-    def __init__(
+    # Ignore the 'Too many arguments'
+    # Because it couldn't get down any lower from the previous 10
+    # 6 is a 40% improvement compared to 10.
+    def __init__(  # noqa: PLR0913
         self,
         bluetoothArgs: BluetoothUpdateArgs,
         *,

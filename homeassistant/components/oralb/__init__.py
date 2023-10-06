@@ -6,9 +6,9 @@ import logging
 from oralb_ble import OralBBluetoothDeviceData
 
 from homeassistant.components.bluetooth import (
-    ActiveBluetoothUpdateArgs,
     BluetoothScanningMode,
     BluetoothServiceInfoBleak,
+    BluetoothUpdateArgs,
     async_ble_device_from_address,
 )
 from homeassistant.components.bluetooth.active_update_processor import (
@@ -68,7 +68,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = hass.data.setdefault(DOMAIN, {})[
         entry.entry_id
     ] = ActiveBluetoothProcessorCoordinator(
-        activeBluetoothArgs=ActiveBluetoothUpdateArgs(
+        bluetoothArgs=BluetoothUpdateArgs(
             hass,
             _LOGGER,
             address=address,

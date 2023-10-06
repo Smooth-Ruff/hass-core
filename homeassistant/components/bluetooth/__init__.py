@@ -314,7 +314,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-class ActiveBluetoothUpdateArgs:
+class BluetoothUpdateArgs:
     def __init__(
         self,
         hass: HomeAssistant,

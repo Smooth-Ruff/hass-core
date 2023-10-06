@@ -12,7 +12,7 @@ from switchbot import SwitchbotModel
 from homeassistant.components import bluetooth
 from homeassistant.components.bluetooth.active_update_coordinator import (
     ActiveBluetoothDataUpdateCoordinator,
-    ActiveBluetoothUpdateArgs,
+    BluetoothUpdateArgs,
 )
 from homeassistant.core import CoreState, HomeAssistant, callback
 
@@ -41,7 +41,7 @@ class SwitchbotDataUpdateCoordinator(ActiveBluetoothDataUpdateCoordinator[None])
     ) -> None:
         """Initialize global switchbot data updater."""
         super().__init__(
-            activeBluetoothArgs=ActiveBluetoothUpdateArgs(
+            bluetoothArgs=BluetoothUpdateArgs(
                 hass=hass,
                 logger=logger,
                 mode=bluetooth.BluetoothScanningMode.ACTIVE,

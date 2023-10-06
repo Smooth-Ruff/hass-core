@@ -6,9 +6,9 @@ from typing import Any
 from xiaomi_ble import XiaomiBluetoothDeviceData
 
 from homeassistant.components.bluetooth import (
-    ActiveBluetoothUpdateArgs,
     BluetoothScanningMode,
     BluetoothServiceInfoBleak,
+    BluetoothUpdateArgs,
 )
 from homeassistant.components.bluetooth.active_update_processor import (
     ActiveBluetoothProcessorCoordinator,
@@ -48,7 +48,7 @@ class XiaomiActiveBluetoothProcessorCoordinator(ActiveBluetoothProcessorCoordina
     ) -> None:
         """Initialize the Xiaomi Bluetooth Active Update Processor Coordinator."""
         super().__init__(
-            activeBluetoothArgs=ActiveBluetoothUpdateArgs(
+            bluetoothArgs=BluetoothUpdateArgs(
                 hass=hass,
                 logger=logger,
                 address=address,

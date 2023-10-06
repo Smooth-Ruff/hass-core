@@ -13,7 +13,7 @@ from homeassistant.core import callback
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.util.dt import monotonic_time_coarse
 
-from . import ActiveBluetoothUpdateArgs, BluetoothChange, BluetoothServiceInfoBleak
+from . import BluetoothChange, BluetoothServiceInfoBleak, BluetoothUpdateArgs
 from .passive_update_coordinator import PassiveBluetoothDataUpdateCoordinator
 
 POLL_DEFAULT_COOLDOWN = 10
@@ -61,7 +61,7 @@ class ActiveBluetoothDataUpdateCoordinator(
     def __init__(
         self,
         *,
-        activeBluetoothArgs: ActiveBluetoothUpdateArgs,
+        bluetoothArgs: BluetoothUpdateArgs,
         needs_poll_method: Callable[[BluetoothServiceInfoBleak, float | None], bool],
         poll_method: Callable[
             [BluetoothServiceInfoBleak],
@@ -72,18 +72,18 @@ class ActiveBluetoothDataUpdateCoordinator(
     ) -> None:
         """Initialize the coordinator."""
         super().__init__(
-            activeBluetoothArgs.hass,
-            activeBluetoothArgs.logger,
-            activeBluetoothArgs.address,
-            activeBluetoothArgs.mode,
-            activeBluetoothArgs.connectable,
+            bluetoothArgs.hass,
+            bluetoothArgs.logger,
+            bluetoothArgs.address,
+            bluetoothArgs.mode,
+            bluetoothArgs.connectable,
         )
         # It's None before the first successful update.
         # Set type to just T to remove annoying checks that data is not None
         # when it was already checked during setup.
         self.data: _T = None  # type: ignore[assignment]
 
-        self.activeBluetoothArgs = activeBluetoothArgs
+        self.bluetoothArgs = bluetoothArgs
         self._needs_poll_method = needs_poll_method
         self._poll_method = poll_method
         self._last_poll: float | None = None
@@ -95,8 +95,8 @@ class ActiveBluetoothDataUpdateCoordinator(
 
         if poll_debouncer is None:
             poll_debouncer = Debouncer(
-                activeBluetoothArgs.hass,
-                activeBluetoothArgs.logger,
+                bluetoothArgs.hass,
+                bluetoothArgs.logger,
                 cooldown=POLL_DEFAULT_COOLDOWN,
                 immediate=POLL_DEFAULT_IMMEDIATE,
                 function=self._async_poll,
@@ -108,7 +108,7 @@ class ActiveBluetoothDataUpdateCoordinator(
 
     def needs_poll(self, service_info: BluetoothServiceInfoBleak) -> bool:
         """Return true if time to try and poll."""
-        if self.activeBluetoothArgs.hass.is_stopping:
+        if self.bluetoothArgs.hass.is_stopping:
             return False
         poll_age: float | None = None
         if self._last_poll:
@@ -131,15 +131,15 @@ class ActiveBluetoothDataUpdateCoordinator(
             self.data = await self._async_poll_data(self._last_service_info)
         except BleakError as exc:
             if self.last_poll_successful:
-                self.activeBluetoothArgs.logger.error(
+                self.bluetoothArgs.logger.error(
                     "%s: Bluetooth error whilst polling: %s", self.address, str(exc)
                 )
                 self.last_poll_successful = False
             return
         except Exception:  # pylint: disable=broad-except
             if self.last_poll_successful:
-                self.activeBluetoothArgs.logger.exception(
-                    "%s: Failure while polling", self.activeBluetoothArgs.address
+                self.bluetoothArgs.logger.exception(
+                    "%s: Failure while polling", self.bluetoothArgs.address
                 )
                 self.last_poll_successful = False
             return
@@ -147,8 +147,8 @@ class ActiveBluetoothDataUpdateCoordinator(
             self._last_poll = monotonic_time_coarse()
 
         if not self.last_poll_successful:
-            self.activeBluetoothArgs.logger.debug(
-                "%s: Polling recovered", self.activeBluetoothArgs.address
+            self.bluetoothArgs.logger.debug(
+                "%s: Polling recovered", self.bluetoothArgs.address
             )
             self.last_poll_successful = True
 

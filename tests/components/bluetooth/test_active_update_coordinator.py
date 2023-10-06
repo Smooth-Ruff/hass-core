@@ -11,10 +11,10 @@ from bleak.exc import BleakError
 
 from homeassistant.components.bluetooth import (
     DOMAIN,
-    ActiveBluetoothUpdateArgs,
     BluetoothChange,
     BluetoothScanningMode,
     BluetoothServiceInfoBleak,
+    BluetoothUpdateArgs,
 )
 from homeassistant.components.bluetooth.active_update_coordinator import (
     _T,
@@ -77,7 +77,7 @@ class MyCoordinator(ActiveBluetoothDataUpdateCoordinator[dict[str, Any]]):
         """Initialize the coordinator."""
         self.passive_data: dict[str, Any] = {}
         super().__init__(
-            activeBluetoothArgs=ActiveBluetoothUpdateArgs(
+            bluetoothArgs=BluetoothUpdateArgs(
                 hass=hass,
                 logger=logger,
                 address=address,

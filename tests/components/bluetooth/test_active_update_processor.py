@@ -10,9 +10,9 @@ import pytest
 
 from homeassistant.components.bluetooth import (
     DOMAIN,
-    ActiveBluetoothUpdateArgs,
     BluetoothScanningMode,
     BluetoothServiceInfoBleak,
+    BluetoothUpdateArgs,
 )
 from homeassistant.components.bluetooth.active_update_processor import (
     ActiveBluetoothProcessorCoordinator,
@@ -67,7 +67,7 @@ async def test_basic_usage(
         return {"testdata": 1}
 
     coordinator = ActiveBluetoothProcessorCoordinator(
-        activeBluetoothArgs=ActiveBluetoothUpdateArgs(
+        bluetoothArgs=BluetoothUpdateArgs(
             hass,
             _LOGGER,
             address="aa:bb:cc:dd:ee:ff",
@@ -121,7 +121,7 @@ async def test_poll_can_be_skipped(
         return {"testdata": flag}
 
     coordinator = ActiveBluetoothProcessorCoordinator(
-        activeBluetoothArgs=ActiveBluetoothUpdateArgs(
+        bluetoothArgs=BluetoothUpdateArgs(
             hass,
             _LOGGER,
             address="aa:bb:cc:dd:ee:ff",
@@ -188,7 +188,7 @@ async def test_bleak_error_and_recover(
         return {"testdata": flag}
 
     coordinator = ActiveBluetoothProcessorCoordinator(
-        activeBluetoothArgs=ActiveBluetoothUpdateArgs(
+        bluetoothArgs=BluetoothUpdateArgs(
             hass,
             _LOGGER,
             address="aa:bb:cc:dd:ee:ff",
@@ -254,7 +254,7 @@ async def test_poll_failure_and_recover(
         return {"testdata": flag}
 
     coordinator = ActiveBluetoothProcessorCoordinator(
-        activeBluetoothArgs=ActiveBluetoothUpdateArgs(
+        bluetoothArgs=BluetoothUpdateArgs(
             hass,
             _LOGGER,
             address="aa:bb:cc:dd:ee:ff",
@@ -316,7 +316,7 @@ async def test_second_poll_needed(
         return {"testdata": count}
 
     coordinator = ActiveBluetoothProcessorCoordinator(
-        activeBluetoothArgs=ActiveBluetoothUpdateArgs(
+        bluetoothArgs=BluetoothUpdateArgs(
             hass,
             _LOGGER,
             address="aa:bb:cc:dd:ee:ff",
@@ -368,7 +368,7 @@ async def test_rate_limit(
         return {"testdata": count}
 
     coordinator = ActiveBluetoothProcessorCoordinator(
-        activeBluetoothArgs=ActiveBluetoothUpdateArgs(
+        bluetoothArgs=BluetoothUpdateArgs(
             hass,
             _LOGGER,
             address="aa:bb:cc:dd:ee:ff",
@@ -420,7 +420,7 @@ async def test_no_polling_after_stop_event(
         return {"testdata": 1}
 
     coordinator = ActiveBluetoothProcessorCoordinator(
-        activeBluetoothArgs=ActiveBluetoothUpdateArgs(
+        bluetoothArgs=BluetoothUpdateArgs(
             hass,
             _LOGGER,
             address="aa:bb:cc:dd:ee:ff",

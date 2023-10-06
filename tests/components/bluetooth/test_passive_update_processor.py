@@ -22,6 +22,7 @@ from homeassistant.components.bluetooth import (
     BluetoothChange,
     BluetoothScanningMode,
     BluetoothServiceInfoBleak,
+    BluetoothUpdateArgs,
 )
 from homeassistant.components.bluetooth.const import UNAVAILABLE_TRACK_SECONDS
 from homeassistant.components.bluetooth.passive_update_processor import (
@@ -136,10 +137,9 @@ async def test_basic_usage(
         return GENERIC_PASSIVE_BLUETOOTH_DATA_UPDATE
 
     coordinator = PassiveBluetoothProcessorCoordinator(
-        hass,
-        _LOGGER,
-        "aa:bb:cc:dd:ee:ff",
-        BluetoothScanningMode.ACTIVE,
+        BluetoothUpdateArgs(
+            hass, _LOGGER, "aa:bb:cc:dd:ee:ff", BluetoothScanningMode.ACTIVE
+        ),
         _mock_update_method,
     )
     assert coordinator.available is False  # no data yet
@@ -244,10 +244,9 @@ async def test_unavailable_after_no_data(
         return GENERIC_PASSIVE_BLUETOOTH_DATA_UPDATE
 
     coordinator = PassiveBluetoothProcessorCoordinator(
-        hass,
-        _LOGGER,
-        "aa:bb:cc:dd:ee:ff",
-        BluetoothScanningMode.ACTIVE,
+        BluetoothUpdateArgs(
+            hass, _LOGGER, "aa:bb:cc:dd:ee:ff", BluetoothScanningMode.ACTIVE
+        ),
         _mock_update_method,
     )
     assert coordinator.available is False  # no data yet
@@ -347,10 +346,9 @@ async def test_no_updates_once_stopping(
         return GENERIC_PASSIVE_BLUETOOTH_DATA_UPDATE
 
     coordinator = PassiveBluetoothProcessorCoordinator(
-        hass,
-        _LOGGER,
-        "aa:bb:cc:dd:ee:ff",
-        BluetoothScanningMode.ACTIVE,
+        BluetoothUpdateArgs(
+            hass, _LOGGER, "aa:bb:cc:dd:ee:ff", BluetoothScanningMode.ACTIVE
+        ),
         _mock_update_method,
     )
     assert coordinator.available is False  # no data yet
@@ -411,10 +409,9 @@ async def test_exception_from_update_method(
         return GENERIC_PASSIVE_BLUETOOTH_DATA_UPDATE
 
     coordinator = PassiveBluetoothProcessorCoordinator(
-        hass,
-        _LOGGER,
-        "aa:bb:cc:dd:ee:ff",
-        BluetoothScanningMode.ACTIVE,
+        BluetoothUpdateArgs(
+            hass, _LOGGER, "aa:bb:cc:dd:ee:ff", BluetoothScanningMode.ACTIVE
+        ),
         _mock_update_method,
     )
     assert coordinator.available is False  # no data yet
@@ -479,10 +476,9 @@ async def test_bad_data_from_update_method(
         return GENERIC_PASSIVE_BLUETOOTH_DATA_UPDATE
 
     coordinator = PassiveBluetoothProcessorCoordinator(
-        hass,
-        _LOGGER,
-        "aa:bb:cc:dd:ee:ff",
-        BluetoothScanningMode.ACTIVE,
+        BluetoothUpdateArgs(
+            hass, _LOGGER, "aa:bb:cc:dd:ee:ff", BluetoothScanningMode.ACTIVE
+        ),
         _mock_update_method,
     )
     assert coordinator.available is False  # no data yet
@@ -836,10 +832,12 @@ async def test_integration_with_entity(
         return GOVEE_B5178_REMOTE_PASSIVE_BLUETOOTH_DATA_UPDATE
 
     coordinator = PassiveBluetoothProcessorCoordinator(
-        hass,
-        _LOGGER,
-        "aa:bb:cc:dd:ee:ff",
-        BluetoothScanningMode.ACTIVE,
+        BluetoothUpdateArgs(
+            hass,
+            _LOGGER,
+            "aa:bb:cc:dd:ee:ff",
+            BluetoothScanningMode.ACTIVE,
+        ),
         _mock_update_method,
     )
     assert coordinator.available is False  # no data yet
@@ -992,10 +990,12 @@ async def test_integration_with_entity_without_a_device(
         return NO_DEVICES_PASSIVE_BLUETOOTH_DATA_UPDATE
 
     coordinator = PassiveBluetoothProcessorCoordinator(
-        hass,
-        _LOGGER,
-        "aa:bb:cc:dd:ee:ff",
-        BluetoothScanningMode.ACTIVE,
+        BluetoothUpdateArgs(
+            hass,
+            _LOGGER,
+            "aa:bb:cc:dd:ee:ff",
+            BluetoothScanningMode.ACTIVE,
+        ),
         _mock_update_method,
     )
     assert coordinator.available is False  # no data yet
@@ -1059,10 +1059,9 @@ async def test_passive_bluetooth_entity_with_entity_platform(
         return NO_DEVICES_PASSIVE_BLUETOOTH_DATA_UPDATE
 
     coordinator = PassiveBluetoothProcessorCoordinator(
-        hass,
-        _LOGGER,
-        "aa:bb:cc:dd:ee:ff",
-        BluetoothScanningMode.ACTIVE,
+        BluetoothUpdateArgs(
+            hass, _LOGGER, "aa:bb:cc:dd:ee:ff", BluetoothScanningMode.ACTIVE
+        ),
         _mock_update_method,
     )
     assert coordinator.available is False  # no data yet
@@ -1163,10 +1162,12 @@ async def test_integration_multiple_entity_platforms(
         return {"test": "data"}
 
     coordinator = PassiveBluetoothProcessorCoordinator(
-        hass,
-        _LOGGER,
-        "aa:bb:cc:dd:ee:ff",
-        BluetoothScanningMode.ACTIVE,
+        BluetoothUpdateArgs(
+            hass,
+            _LOGGER,
+            "aa:bb:cc:dd:ee:ff",
+            BluetoothScanningMode.ACTIVE,
+        ),
         _mock_update_method,
     )
     assert coordinator.available is False  # no data yet
@@ -1270,10 +1271,12 @@ async def test_exception_from_coordinator_update_method(
         return GENERIC_PASSIVE_BLUETOOTH_DATA_UPDATE
 
     coordinator = PassiveBluetoothProcessorCoordinator(
-        hass,
-        _LOGGER,
-        "aa:bb:cc:dd:ee:ff",
-        BluetoothScanningMode.ACTIVE,
+        BluetoothUpdateArgs(
+            hass,
+            _LOGGER,
+            "aa:bb:cc:dd:ee:ff",
+            BluetoothScanningMode.ACTIVE,
+        ),
         _mock_update_method,
     )
     assert coordinator.available is False  # no data yet
@@ -1318,10 +1321,12 @@ async def test_integration_multiple_entity_platforms_with_reload_and_restart(
 
     current_entry.set(entry)
     coordinator = PassiveBluetoothProcessorCoordinator(
-        hass,
-        _LOGGER,
-        "aa:bb:cc:dd:ee:ff",
-        BluetoothScanningMode.ACTIVE,
+        BluetoothUpdateArgs(
+            hass,
+            _LOGGER,
+            "aa:bb:cc:dd:ee:ff",
+            BluetoothScanningMode.ACTIVE,
+        ),
         _mock_update_method,
     )
     assert coordinator.available is False  # no data yet
@@ -1407,10 +1412,9 @@ async def test_integration_multiple_entity_platforms_with_reload_and_restart(
 
     current_entry.set(entry)
     coordinator = PassiveBluetoothProcessorCoordinator(
-        hass,
-        _LOGGER,
-        "aa:bb:cc:dd:ee:ff",
-        BluetoothScanningMode.ACTIVE,
+        BluetoothUpdateArgs(
+            hass, _LOGGER, "aa:bb:cc:dd:ee:ff", BluetoothScanningMode.ACTIVE
+        ),
         _mock_update_method,
     )
     binary_sensor_processor = PassiveBluetoothDataProcessor(
@@ -1496,10 +1500,9 @@ async def test_integration_multiple_entity_platforms_with_reload_and_restart(
 
     current_entry.set(entry)
     coordinator = PassiveBluetoothProcessorCoordinator(
-        hass,
-        _LOGGER,
-        "aa:bb:cc:dd:ee:ff",
-        BluetoothScanningMode.ACTIVE,
+        BluetoothUpdateArgs(
+            hass, _LOGGER, "aa:bb:cc:dd:ee:ff", BluetoothScanningMode.ACTIVE
+        ),
         _mock_update_method,
     )
     assert coordinator.available is False  # no data yet

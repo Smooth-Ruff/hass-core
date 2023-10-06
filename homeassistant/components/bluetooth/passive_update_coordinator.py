@@ -36,13 +36,7 @@ class PassiveBluetoothDataUpdateCoordinator(
         bluetoothArgs: BluetoothUpdateArgs,
     ) -> None:
         """Initialize PassiveBluetoothDataUpdateCoordinator."""
-        super().__init__(
-            bluetoothArgs.hass,
-            bluetoothArgs.logger,
-            bluetoothArgs.address,
-            bluetoothArgs.mode,
-            bluetoothArgs.connectable,
-        )
+        super().__init__(bluetoothArgs)
 
         self.bluetoothArgs = bluetoothArgs
         self._listeners: dict[CALLBACK_TYPE, tuple[CALLBACK_TYPE, object | None]] = {}

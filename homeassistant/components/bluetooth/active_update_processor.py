@@ -69,12 +69,8 @@ class ActiveBluetoothProcessorCoordinator(
     ) -> None:
         """Initialize the processor."""
         super().__init__(
-            bluetoothArgs.hass,
-            bluetoothArgs.logger,
-            bluetoothArgs.address,
-            bluetoothArgs.mode,
+            bluetoothArgs,
             update_method,
-            bluetoothArgs.connectable,
         )
 
         self.bluetoothArgs = bluetoothArgs

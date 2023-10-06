@@ -4,7 +4,6 @@ from __future__ import annotations
 import dataclasses
 from datetime import timedelta
 from functools import cache
-import logging
 from typing import TYPE_CHECKING, Any, Generic, TypedDict, TypeVar, cast
 
 from homeassistant import config_entries
@@ -31,11 +30,8 @@ if TYPE_CHECKING:
 
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-    from .models import (
-        BluetoothChange,
-        BluetoothScanningMode,
-        BluetoothServiceInfoBleak,
-    )
+    from . import BluetoothUpdateArgs
+    from .models import BluetoothChange, BluetoothServiceInfoBleak
 
 STORAGE_KEY = "bluetooth.passive_update_processor"
 STORAGE_VERSION = 1
@@ -265,15 +261,13 @@ class PassiveBluetoothProcessorCoordinator(
 
     def __init__(
         self,
-        hass: HomeAssistant,
-        logger: logging.Logger,
-        address: str,
-        mode: BluetoothScanningMode,
+        bluetoothArgs: BluetoothUpdateArgs,
         update_method: Callable[[BluetoothServiceInfoBleak], _T],
-        connectable: bool = False,
     ) -> None:
         """Initialize the coordinator."""
-        super().__init__(hass, logger, address, mode, connectable)
+        super().__init__(bluetoothArgs)
+
+        self.bluetoothArgs = bluetoothArgs
         self._processors: list[PassiveBluetoothDataProcessor] = []
         self._update_method = update_method
         self.last_update_success = True
@@ -350,14 +344,14 @@ class PassiveBluetoothProcessorCoordinator(
             update = self._update_method(service_info)
         except Exception as err:  # pylint: disable=broad-except
             self.last_update_success = False
-            self.logger.exception(
+            self.bluetoothArgs.logger.exception(
                 "Unexpected error updating %s data: %s", self.name, err
             )
             return
 
         if not self.last_update_success:
             self.last_update_success = True
-            self.logger.info("Coordinator %s recovered", self.name)
+            self.bluetoothArgs.logger.info("Coordinator %s recovered", self.name)
 
         for processor in self._processors:
             processor.async_handle_update(update, was_available)

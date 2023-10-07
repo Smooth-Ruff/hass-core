@@ -113,18 +113,49 @@ async def _async_resolve_default_pipeline_settings(
     The default pipeline will use the homeassistant conversation agent and the
     default stt / tts engines if none are specified.
     """
-    conversation_language = "en"
-    pipeline_language = "en"
-    pipeline_name = "Home Assistant"
-    stt_engine = None
     stt_language = None
-    tts_engine = None
     tts_language = None
     tts_voice = None
     wake_word_entity = None
     wake_word_id = None
 
     # Find a matching language supported by the Home Assistant conversation agent
+    conversation_language, pipeline_language, pipeline_name = await _resolve_languages(
+        hass
+    )
+    # Resolve STT engine and language for the given engine ID
+    stt_engine_id, stt_language = await _resolve_stt_engine(
+        hass, stt_engine_id, pipeline_language
+    )
+    # Resolve TTS engine, language, and voice for the given engine ID.
+    tts_engine_id, tts_language, tts_voice = await _resolve_tts_engine(
+        hass, tts_engine_id, pipeline_language
+    )
+
+    if stt_engine_id == "cloud" and tts_engine_id == "cloud":
+        pipeline_name = "Home Assistant Cloud"
+
+    return {
+        "conversation_engine": conversation.HOME_ASSISTANT_AGENT,
+        "conversation_language": conversation_language,
+        "language": hass.config.language,
+        "name": pipeline_name,
+        "stt_engine": stt_engine_id,
+        "stt_language": stt_language,
+        "tts_engine": tts_engine_id,
+        "tts_language": tts_language,
+        "tts_voice": tts_voice,
+        "wake_word_entity": wake_word_entity,
+        "wake_word_id": wake_word_id,
+    }
+
+
+async def _resolve_languages(hass: HomeAssistant) -> tuple:
+    """Resolve conversation and pipeline languages."""
+    conversation_language = "en"
+    pipeline_language = "en"
+    pipeline_name = "Home Assistant"
+
     conversation_languages = language_util.matches(
         hass.config.language,
         await conversation.async_get_conversation_languages(
@@ -136,6 +167,16 @@ async def _async_resolve_default_pipeline_settings(
         pipeline_language = hass.config.language
         conversation_language = conversation_languages[0]
 
+    return conversation_language, pipeline_language, pipeline_name
+
+
+async def _resolve_stt_engine(
+    hass: HomeAssistant, stt_engine_id: str | None, pipeline_language: str
+) -> tuple:
+    """Resolve STT engine and language."""
+    stt_engine = None
+    stt_language = None
+
     if stt_engine_id is None:
         stt_engine_id = stt.async_default_engine(hass)
 
@@ -144,7 +185,7 @@ async def _async_resolve_default_pipeline_settings(
         if stt_engine is None:
             stt_engine_id = None
 
-    if stt_engine:
+    if stt_engine is not None:
         stt_languages = language_util.matches(
             pipeline_language,
             stt_engine.supported_languages,
@@ -160,6 +201,17 @@ async def _async_resolve_default_pipeline_settings(
             )
             stt_engine_id = None
 
+    return stt_engine_id, stt_language
+
+
+async def _resolve_tts_engine(
+    hass: HomeAssistant, tts_engine_id: str | None, pipeline_language: str
+) -> tuple:
+    """Resolve TTS engine, language, and voice."""
+    tts_engine = None
+    tts_language = None
+    tts_voice = None
+
     if tts_engine_id is None:
         tts_engine_id = tts.async_default_engine(hass)
 
@@ -168,7 +220,7 @@ async def _async_resolve_default_pipeline_settings(
         if tts_engine is None:
             tts_engine_id = None
 
-    if tts_engine:
+    if tts_engine is not None:
         tts_languages = language_util.matches(
             pipeline_language,
             tts_engine.supported_languages,
@@ -187,22 +239,7 @@ async def _async_resolve_default_pipeline_settings(
             )
             tts_engine_id = None
 
-    if stt_engine_id == "cloud" and tts_engine_id == "cloud":
-        pipeline_name = "Home Assistant Cloud"
-
-    return {
-        "conversation_engine": conversation.HOME_ASSISTANT_AGENT,
-        "conversation_language": conversation_language,
-        "language": hass.config.language,
-        "name": pipeline_name,
-        "stt_engine": stt_engine_id,
-        "stt_language": stt_language,
-        "tts_engine": tts_engine_id,
-        "tts_language": tts_language,
-        "tts_voice": tts_voice,
-        "wake_word_entity": wake_word_entity,
-        "wake_word_id": wake_word_id,
-    }
+    return tts_engine_id, tts_language, tts_voice
 
 
 async def _async_create_default_pipeline(

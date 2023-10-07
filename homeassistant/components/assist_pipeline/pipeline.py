@@ -741,7 +741,6 @@ class PipelineRun:
         stt_audio_buffer: deque[ProcessedAudioChunk] | None,
         wake_word_vad: VoiceActivityTimeout | None,
         sample_rate: int = 16000,
-        sample_width: int = 2,
     ) -> AsyncIterable[tuple[bytes, int]]:
         """Yield audio chunks with timestamps (milliseconds since start of stream).
 
@@ -871,7 +870,6 @@ class PipelineRun:
         audio_stream: AsyncIterable[ProcessedAudioChunk],
         stt_vad: VoiceCommandSegmenter | None,
         sample_rate: int = 16000,
-        sample_width: int = 2,
     ) -> AsyncGenerator[bytes, None]:
         """Yield audio chunks until VAD detects silence or speech-to-text completes."""
         chunk_seconds = AUDIO_PROCESSOR_SAMPLES / sample_rate
@@ -1221,10 +1219,9 @@ def _pipeline_debug_recording_thread_proc(
                 wav_writer.setframerate(16000)
                 wav_writer.setsampwidth(2)
                 wav_writer.setnchannels(1)
-            elif isinstance(message, bytes):
+            elif isinstance(message, bytes) and wav_writer is not None:
                 # Chunk of 16-bit mono audio at 16Khz
-                if wav_writer is not None:
-                    wav_writer.writeframes(message)
+                wav_writer.writeframes(message)
     except Exception:  # pylint: disable=broad-exception-caught
         _LOGGER.exception("Unexpected error in debug recording thread")
     finally:

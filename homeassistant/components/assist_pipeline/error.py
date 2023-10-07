@@ -22,7 +22,7 @@ class WakeWordDetectionError(PipelineError):
     """Error in wake-word-detection portion of pipeline."""
 
 
-class WakeWordDetectionAborted(WakeWordDetectionError):
+class WakeWordDetectionAbortedError(WakeWordDetectionError):
     """Wake-word-detection was aborted."""
 
     def __init__(self) -> None:

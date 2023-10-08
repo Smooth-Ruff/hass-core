@@ -25,24 +25,24 @@ class DomainData:
         default_factory=ESPHomeBluetoothCache
     )
 
-    def get_entry_data(self, entry: ConfigEntry) -> RuntimeEntryData:
+    def get_entry_data(self:DomainData, entry: ConfigEntry) -> RuntimeEntryData:
         """Return the runtime entry data associated with this config entry.
 
         Raises KeyError if the entry isn't loaded yet.
         """
         return self._entry_datas[entry.entry_id]
 
-    def set_entry_data(self, entry: ConfigEntry, entry_data: RuntimeEntryData) -> None:
+    def set_entry_data(self:DomainData, entry: ConfigEntry, entry_data: RuntimeEntryData) -> None:
         """Set the runtime entry data associated with this config entry."""
         assert entry.entry_id not in self._entry_datas, "Entry data already set!"
         self._entry_datas[entry.entry_id] = entry_data
 
-    def pop_entry_data(self, entry: ConfigEntry) -> RuntimeEntryData:
+    def pop_entry_data(self:DomainData, entry: ConfigEntry) -> RuntimeEntryData:
         """Pop the runtime entry data instance associated with this config entry."""
         return self._entry_datas.pop(entry.entry_id)
 
     def get_or_create_store(
-        self, hass: HomeAssistant, entry: ConfigEntry
+        self:DomainData, hass: HomeAssistant, entry: ConfigEntry
     ) -> ESPHomeStorage:
         """Get or create a Store instance for the given config entry."""
         return self._stores.setdefault(
@@ -53,7 +53,7 @@ class DomainData:
         )
 
     @classmethod
-    def get(cls, hass: HomeAssistant) -> Self:
+    def get(cls:DomainData, hass: HomeAssistant) -> Self:
         """Get the global DomainData instance stored in hass.data."""
         # Don't use setdefault - this is a hot code path
         if DOMAIN in hass.data:

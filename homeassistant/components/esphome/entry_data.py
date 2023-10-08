@@ -126,13 +126,13 @@ class RuntimeEntryData:
     original_options: dict[str, Any] = field(default_factory=dict)
 
     @property
-    def name(self) -> str:
+    def name(self:RuntimeEntryData) -> str:
         """Return the name of the device."""
         device_info = self.device_info
         return (device_info and device_info.name) or self.title
 
     @property
-    def friendly_name(self) -> str:
+    def friendly_name(self:RuntimeEntryData) -> str:
         """Return the friendly name of the device."""
         device_info = self.device_info
         return (device_info and device_info.friendly_name) or self.name.title().replace(
@@ -140,18 +140,18 @@ class RuntimeEntryData:
         )
 
     @property
-    def signal_device_updated(self) -> str:
+    def signal_device_updated(self:RuntimeEntryData) -> str:
         """Return the signal to listen to for core device state update."""
         return f"esphome_{self.entry_id}_on_device_update"
 
     @property
-    def signal_static_info_updated(self) -> str:
+    def signal_static_info_updated(self:RuntimeEntryData) -> str:
         """Return the signal to listen to for updates on static info."""
         return f"esphome_{self.entry_id}_on_list"
 
     @callback
     def async_register_static_info_callback(
-        self,
+        self:RuntimeEntryData,
         entity_info_type: type[EntityInfo],
         callback_: Callable[[list[EntityInfo]], None],
     ) -> CALLBACK_TYPE:
@@ -166,7 +166,7 @@ class RuntimeEntryData:
 
     @callback
     def async_register_key_static_info_remove_callback(
-        self,
+        self:RuntimeEntryData,
         static_info: EntityInfo,
         callback_: Callable[[], Coroutine[Any, Any, None]],
     ) -> CALLBACK_TYPE:
@@ -182,7 +182,7 @@ class RuntimeEntryData:
 
     @callback
     def async_register_key_static_info_updated_callback(
-        self,
+        self:RuntimeEntryData,
         static_info: EntityInfo,
         callback_: Callable[[EntityInfo], None],
     ) -> CALLBACK_TYPE:
@@ -197,14 +197,14 @@ class RuntimeEntryData:
         return _unsub
 
     @callback
-    def async_set_assist_pipeline_state(self, state: bool) -> None:
+    def async_set_assist_pipeline_state(self:RuntimeEntryData, state: bool) -> None:
         """Set the assist pipeline state."""
         self.assist_pipeline_state = state
         for update_callback in self.assist_pipeline_update_callbacks:
             update_callback()
 
     def async_subscribe_assist_pipeline_update(
-        self, update_callback: Callable[[], None]
+        self:RuntimeEntryData, update_callback: Callable[[], None]
     ) -> Callable[[], None]:
         """Subscribe to assist pipeline updates."""
 
@@ -214,7 +214,7 @@ class RuntimeEntryData:
         self.assist_pipeline_update_callbacks.append(update_callback)
         return _unsubscribe
 
-    async def async_remove_entities(self, static_infos: Iterable[EntityInfo]) -> None:
+    async def async_remove_entities(self:RuntimeEntryData, static_infos: Iterable[EntityInfo]) -> None:
         """Schedule the removal of an entity."""
         callbacks: list[Coroutine[Any, Any, None]] = []
         for static_info in static_infos:
@@ -225,7 +225,7 @@ class RuntimeEntryData:
             await asyncio.gather(*callbacks)
 
     @callback
-    def async_update_entity_infos(self, static_infos: Iterable[EntityInfo]) -> None:
+    def async_update_entity_infos(self:RuntimeEntryData, static_infos: Iterable[EntityInfo]) -> None:
         """Call static info updated callbacks."""
         for static_info in static_infos:
             callback_key = (type(static_info), static_info.key)
@@ -235,7 +235,7 @@ class RuntimeEntryData:
                 callback_(static_info)
 
     async def _ensure_platforms_loaded(
-        self, hass: HomeAssistant, entry: ConfigEntry, platforms: set[Platform]
+        self:RuntimeEntryData, hass: HomeAssistant, entry: ConfigEntry, platforms: set[Platform]
     ) -> None:
         async with self.platform_load_lock:
             needed = platforms - self.loaded_platforms
@@ -244,7 +244,7 @@ class RuntimeEntryData:
             self.loaded_platforms |= needed
 
     async def async_update_static_infos(
-        self, hass: HomeAssistant, entry: ConfigEntry, infos: list[EntityInfo]
+        self:RuntimeEntryData, hass: HomeAssistant, entry: ConfigEntry, infos: list[EntityInfo]
     ) -> None:
         """Distribute an update of static infos to all platforms."""
         # First, load all platforms
@@ -284,7 +284,7 @@ class RuntimeEntryData:
 
     @callback
     def async_subscribe_state_update(
-        self,
+        self:RuntimeEntryData,
         state_type: type[EntityState],
         state_key: int,
         entity_callback: Callable[[], None],
@@ -298,7 +298,7 @@ class RuntimeEntryData:
         return _unsubscribe
 
     @callback
-    def async_update_state(self, state: EntityState) -> None:
+    def async_update_state(self:RuntimeEntryData, state: EntityState) -> None:
         """Distribute an update of state information to the target."""
         key = state.key
         state_type = type(state)
@@ -345,11 +345,11 @@ class RuntimeEntryData:
                 _LOGGER.exception("Error while calling subscription: %s", ex)
 
     @callback
-    def async_update_device_state(self, hass: HomeAssistant) -> None:
+    def async_update_device_state(self:RuntimeEntryData, hass: HomeAssistant) -> None:
         """Distribute an update of a core device state like availability."""
         async_dispatcher_send(hass, self.signal_device_updated)
 
-    async def async_load_from_store(self) -> tuple[list[EntityInfo], list[UserService]]:
+    async def async_load_from_store(self:RuntimeEntryData) -> tuple[list[EntityInfo], list[UserService]]:
         """Load the retained data from store and return de-serialized data."""
         if (restored := await self.store.async_load()) is None:
             return [], []
@@ -371,7 +371,7 @@ class RuntimeEntryData:
         ]
         return infos, services
 
-    async def async_save_to_store(self) -> None:
+    async def async_save_to_store(self:RuntimeEntryData) -> None:
         """Generate dynamic data to store and save it to the filesystem."""
         if TYPE_CHECKING:
             assert self.device_info is not None
@@ -398,7 +398,7 @@ class RuntimeEntryData:
         self._pending_storage = _memorized_storage
         self.store.async_delay_save(_memorized_storage, SAVE_DELAY)
 
-    async def async_cleanup(self) -> None:
+    async def async_cleanup(self:RuntimeEntryData) -> None:
         """Cleanup the entry data when disconnected or unloading."""
         if self._pending_storage:
             # Ensure we save the data if we are unloading before the
@@ -406,7 +406,7 @@ class RuntimeEntryData:
             await self.store.async_save(self._pending_storage())
 
     async def async_update_listener(
-        self, hass: HomeAssistant, entry: ConfigEntry
+        self:RuntimeEntryData, hass: HomeAssistant, entry: ConfigEntry
     ) -> None:
         """Handle options update."""
         if self.original_options == entry.options:

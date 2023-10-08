@@ -26,6 +26,8 @@ from .entity import EsphomeEntity, esphome_state_property, platform_async_setup_
 from .enum_mapper import EsphomeEnumMapper
 
 ORDERED_NAMED_FAN_SPEEDS = [FanSpeed.LOW, FanSpeed.MEDIUM, FanSpeed.HIGH]
+API_VERSION_THRESHOLD = 3
+
 
 
 async def async_setup_entry(
@@ -53,12 +55,14 @@ _FAN_DIRECTIONS: EsphomeEnumMapper[FanDirection, str] = EsphomeEnumMapper(
 class EsphomeFan(EsphomeEntity[FanInfo, FanState], FanEntity):
     """A fan implementation for ESPHome."""
 
-    @property
-    def _supports_speed_levels(self) -> bool:
-        api_version = self._api_version
-        return api_version.major == 1 and api_version.minor > 3
 
-    async def async_set_percentage(self, percentage: int) -> None:
+    @property
+    def _supports_speed_levels(self:EsphomeFan) -> bool:
+        api_version = self._api_version
+        return api_version.major == 1 and api_version.minor > API_VERSION_THRESHOLD
+
+
+    async def async_set_percentage(self:EsphomeFan, percentage: int) -> None:
         """Set the speed percentage of the fan."""
         await self._async_set_percentage(percentage)
 
@@ -86,20 +90,20 @@ class EsphomeFan(EsphomeEntity[FanInfo, FanState], FanEntity):
         self,
         percentage: int | None = None,
         preset_mode: str | None = None,
-        **kwargs: Any,
+        **kwargs,
     ) -> None:
         """Turn on the fan."""
         await self._async_set_percentage(percentage)
 
-    async def async_turn_off(self, **kwargs: Any) -> None:
+    async def async_turn_off(self:EsphomeFan, **kwargs: Any) -> None:
         """Turn off the fan."""
         await self._client.fan_command(key=self._key, state=False)
 
-    async def async_oscillate(self, oscillating: bool) -> None:
+    async def async_oscillate(self:EsphomeFan, oscillating: bool) -> None:
         """Oscillate the fan."""
         await self._client.fan_command(key=self._key, oscillating=oscillating)
 
-    async def async_set_direction(self, direction: str) -> None:
+    async def async_set_direction(self:EsphomeFan, direction: str) -> None:
         """Set direction of the fan."""
         await self._client.fan_command(
             key=self._key, direction=_FAN_DIRECTIONS.from_hass(direction)
@@ -107,13 +111,13 @@ class EsphomeFan(EsphomeEntity[FanInfo, FanState], FanEntity):
 
     @property
     @esphome_state_property
-    def is_on(self) -> bool | None:
+    def is_on(self:EsphomeFan) -> bool | None:
         """Return true if the entity is on."""
         return self._state.state
 
     @property
     @esphome_state_property
-    def percentage(self) -> int | None:
+    def percentage(self:EsphomeFan) -> int | None:
         """Return the current speed percentage."""
         if not self._supports_speed_levels:
             return ordered_list_item_to_percentage(
@@ -125,7 +129,7 @@ class EsphomeFan(EsphomeEntity[FanInfo, FanState], FanEntity):
         )
 
     @property
-    def speed_count(self) -> int:
+    def speed_count(self:EsphomeFan) -> int:
         """Return the number of speeds the fan supports."""
         if not self._supports_speed_levels:
             return len(ORDERED_NAMED_FAN_SPEEDS)
@@ -133,18 +137,18 @@ class EsphomeFan(EsphomeEntity[FanInfo, FanState], FanEntity):
 
     @property
     @esphome_state_property
-    def oscillating(self) -> bool | None:
+    def oscillating(self:EsphomeFan) -> bool | None:
         """Return the oscillation state."""
         return self._state.oscillating
 
     @property
     @esphome_state_property
-    def current_direction(self) -> str | None:
+    def current_direction(self:EsphomeFan) -> str | None:
         """Return the current fan direction."""
         return _FAN_DIRECTIONS.from_esphome(self._state.direction)
 
     @callback
-    def _on_static_info_update(self, static_info: EntityInfo) -> None:
+    def _on_static_info_update(self:EsphomeFan, static_info: EntityInfo) -> None:
         """Set attrs from static info."""
         super()._on_static_info_update(static_info)
         static_info = self._static_info

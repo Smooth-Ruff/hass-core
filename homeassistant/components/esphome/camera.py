@@ -35,7 +35,7 @@ async def async_setup_entry(
 class EsphomeCamera(Camera, EsphomeEntity[CameraInfo, CameraState]):
     """A camera implementation for ESPHome."""
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self:EsphomeCamera, *args, **kwargs) -> None:
         """Initialize."""
         Camera.__init__(self)
         EsphomeEntity.__init__(self, *args, **kwargs)
@@ -43,7 +43,7 @@ class EsphomeCamera(Camera, EsphomeEntity[CameraInfo, CameraState]):
         self._image_futures: list[asyncio.Future[bool | None]] = []
 
     @callback
-    def _set_futures(self, result: bool) -> None:
+    def _set_futures(self:EsphomeCamera, result: bool) -> None:
         """Set futures to done."""
         for future in self._image_futures:
             if not future.done():
@@ -51,26 +51,26 @@ class EsphomeCamera(Camera, EsphomeEntity[CameraInfo, CameraState]):
         self._image_futures.clear()
 
     @callback
-    def _on_device_update(self) -> None:
+    def _on_device_update(self:EsphomeCamera) -> None:
         """Handle device going available or unavailable."""
         super()._on_device_update()
         if not self.available:
             self._set_futures(False)
 
     @callback
-    def _on_state_update(self) -> None:
+    def _on_state_update(self:EsphomeCamera) -> None:
         """Notify listeners of new image when update arrives."""
         super()._on_state_update()
         self._set_futures(True)
 
     async def async_camera_image(
-        self, width: int | None = None, height: int | None = None
+        self:EsphomeCamera
     ) -> bytes | None:
         """Return single camera image bytes."""
         return await self._async_request_image(self._client.request_single_image)
 
     async def _async_request_image(
-        self, request_method: Callable[[], Coroutine[Any, Any, None]]
+        self:EsphomeCamera, request_method: Callable[[], Coroutine[Any, Any, None]]
     ) -> bytes | None:
         """Wait for an image to be available and return it."""
         if not self.available:
@@ -83,7 +83,7 @@ class EsphomeCamera(Camera, EsphomeEntity[CameraInfo, CameraState]):
         return self._state.data
 
     async def handle_async_mjpeg_stream(
-        self, request: web.Request
+        self:EsphomeCamera, request: web.Request
     ) -> web.StreamResponse:
         """Serve an HTTP MJPEG stream from the camera."""
         stream_request = partial(

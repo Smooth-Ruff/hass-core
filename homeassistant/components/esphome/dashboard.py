@@ -50,7 +50,7 @@ async def async_get_or_create_dashboard_manager(
 class ESPHomeDashboardManager:
     """Class to manage the dashboard and restore it from storage."""
 
-    def __init__(self, hass: HomeAssistant) -> None:
+    def __init__(self:ESPHomeDashboardManager, hass: HomeAssistant) -> None:
         """Initialize the dashboard manager."""
         self._hass = hass
         self._store: Store[dict[str, Any]] = Store(hass, STORAGE_VERSION, STORAGE_KEY)
@@ -58,7 +58,7 @@ class ESPHomeDashboardManager:
         self._current_dashboard: ESPHomeDashboard | None = None
         self._cancel_shutdown: CALLBACK_TYPE | None = None
 
-    async def async_setup(self) -> None:
+    async def async_setup(self:ESPHomeDashboardManager) -> None:
         """Restore the dashboard from storage."""
         self._data = await self._store.async_load()
         if (data := self._data) and (info := data.get("info")):
@@ -67,12 +67,12 @@ class ESPHomeDashboardManager:
             )
 
     @callback
-    def async_get(self) -> ESPHomeDashboard | None:
+    def async_get(self:ESPHomeDashboardManager) -> ESPHomeDashboard | None:
         """Get the current dashboard."""
         return self._current_dashboard
 
     async def async_set_dashboard_info(
-        self, addon_slug: str, host: str, port: int
+        self:ESPHomeDashboardManager, addon_slug: str, host: str, port: int
     ) -> None:
         """Set the dashboard info."""
         url = f"http://{host}:{port}"
@@ -160,7 +160,7 @@ class ESPHomeDashboard(DataUpdateCoordinator[dict[str, ConfiguredDevice]]):
     """Class to interact with the ESPHome dashboard."""
 
     def __init__(
-        self,
+        self:ESPHomeDashboard,
         hass: HomeAssistant,
         addon_slug: str,
         url: str,
@@ -179,7 +179,7 @@ class ESPHomeDashboard(DataUpdateCoordinator[dict[str, ConfiguredDevice]]):
         self.api = ESPHomeDashboardAPI(url, session)
 
     @property
-    def supports_update(self) -> bool:
+    def supports_update(self:ESPHomeDashboard) -> bool:
         """Return whether the dashboard supports updates."""
         if self.data is None:
             raise RuntimeError("Data needs to be loaded first")
@@ -192,7 +192,7 @@ class ESPHomeDashboard(DataUpdateCoordinator[dict[str, ConfiguredDevice]]):
         # There is no January release
         return AwesomeVersion(esphome_version) > AwesomeVersion("2023.1.0")
 
-    async def _async_update_data(self) -> dict:
+    async def _async_update_data(self:ESPHomeDashboard) -> dict:
         """Fetch device data."""
         devices = await self.api.get_devices()
         return {dev["name"]: dev for dev in devices["configured"]}

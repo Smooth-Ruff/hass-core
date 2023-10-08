@@ -40,7 +40,7 @@ async def platform_async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
-    *,
+    
     info_type: type[_InfoT],
     entity_type: type[_EntityT],
     state_type: type[_StateT],
@@ -137,7 +137,7 @@ class EsphomeEntity(Entity, Generic[_InfoT, _StateT]):
     _has_state: bool
 
     def __init__(
-        self,
+        self:EsphomeEntity,
         entry_data: RuntimeEntryData,
         domain: str,
         entity_info: EntityInfo,
@@ -177,7 +177,7 @@ class EsphomeEntity(Entity, Generic[_InfoT, _StateT]):
         self._attr_has_entity_name = True
         self.entity_id = f"{domain}.{device_info.name}_{entity_info.object_id}"
 
-    async def async_added_to_hass(self) -> None:
+    async def async_added_to_hass(self:EsphomeEntity) -> None:
         """Register callbacks."""
         entry_data = self._entry_data
         hass = self.hass
@@ -209,7 +209,7 @@ class EsphomeEntity(Entity, Generic[_InfoT, _StateT]):
         self._update_state_from_entry_data()
 
     @callback
-    def _on_static_info_update(self, static_info: EntityInfo) -> None:
+    def _on_static_info_update(self:EsphomeEntity, static_info: EntityInfo) -> None:
         """Save the static info for this entity when it changes.
 
         This method can be overridden in child classes to know
@@ -230,7 +230,7 @@ class EsphomeEntity(Entity, Generic[_InfoT, _StateT]):
             self._attr_icon = None
 
     @callback
-    def _update_state_from_entry_data(self) -> None:
+    def _update_state_from_entry_data(self:EsphomeEntity) -> None:
         """Update state from entry data."""
 
         state = self._entry_data.state
@@ -242,7 +242,7 @@ class EsphomeEntity(Entity, Generic[_InfoT, _StateT]):
         self._has_state = has_state
 
     @callback
-    def _on_state_update(self) -> None:
+    def _on_state_update(self:EsphomeEntity) -> None:
         """Call when state changed.
 
         Behavior can be changed in child classes
@@ -251,13 +251,13 @@ class EsphomeEntity(Entity, Generic[_InfoT, _StateT]):
         self.async_write_ha_state()
 
     @callback
-    def _on_entry_data_changed(self) -> None:
+    def _on_entry_data_changed(self:EsphomeEntity) -> None:
         entry_data = self._entry_data
         self._api_version = entry_data.api_version
         self._client = entry_data.client
 
     @callback
-    def _on_device_update(self) -> None:
+    def _on_device_update(self:EsphomeEntity) -> None:
         """Call when device updates or entry data changes."""
         self._on_entry_data_changed()
         if not self._entry_data.available:
@@ -268,7 +268,7 @@ class EsphomeEntity(Entity, Generic[_InfoT, _StateT]):
             self.async_write_ha_state()
 
     @property
-    def available(self) -> bool:
+    def available(self:EsphomeEntity) -> bool:
         """Return if the entity is available."""
         if self._device_info.has_deep_sleep:
             # During deep sleep the ESP will not be connectable (by design)
@@ -284,7 +284,7 @@ class EsphomeAssistEntity(Entity):
     _attr_has_entity_name = True
     _attr_should_poll = False
 
-    def __init__(self, entry_data: RuntimeEntryData) -> None:
+    def __init__(self:EsphomeAssistEntity, entry_data: RuntimeEntryData) -> None:
         """Initialize the binary sensor."""
         self._entry_data: RuntimeEntryData = entry_data
         assert entry_data.device_info is not None
@@ -298,10 +298,10 @@ class EsphomeAssistEntity(Entity):
         )
 
     @callback
-    def _update(self) -> None:
+    def _update(self:EsphomeAssistEntity) -> None:
         self.async_write_ha_state()
 
-    async def async_added_to_hass(self) -> None:
+    async def async_added_to_hass(self:EsphomeAssistEntity) -> None:
         """Register update callback."""
         await super().async_added_to_hass()
         self.async_on_remove(

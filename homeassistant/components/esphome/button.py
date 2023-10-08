@@ -30,7 +30,7 @@ class EsphomeButton(EsphomeEntity[ButtonInfo, EntityState], ButtonEntity):
     """A button implementation for ESPHome."""
 
     @callback
-    def _on_static_info_update(self, static_info: EntityInfo) -> None:
+    def _on_static_info_update(self:EsphomeButton, static_info: EntityInfo) -> None:
         """Set attrs from static info."""
         super()._on_static_info_update(static_info)
         self._attr_device_class = try_parse_enum(
@@ -38,7 +38,7 @@ class EsphomeButton(EsphomeEntity[ButtonInfo, EntityState], ButtonEntity):
         )
 
     @callback
-    def _on_device_update(self) -> None:
+    def _on_device_update(self:EsphomeButton) -> None:
         """Call when device updates or entry data changes.
 
         The default behavior is only to write entity state when the
@@ -52,6 +52,6 @@ class EsphomeButton(EsphomeEntity[ButtonInfo, EntityState], ButtonEntity):
         self._on_entry_data_changed()
         self.async_write_ha_state()
 
-    async def async_press(self) -> None:
+    async def async_press(self:EsphomeButton) -> None:
         """Press the button."""
         await self._client.button_command(self._key)

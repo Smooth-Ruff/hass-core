@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from fnmatch import translate
 from functools import lru_cache
 import re
-from typing import TYPE_CHECKING, Final, Generic, TypedDict, TypeVar
+from typing import TYPE_CHECKING, Any, Final, Generic, TypedDict, TypeVar
 
 from lru import LRU  # pylint: disable=no-name-in-module
 
@@ -240,39 +240,35 @@ class BluetoothMatcherIndexBase(Generic[_T]):
 
     def match(self, service_info: BluetoothServiceInfoBleak) -> list[_T]:
         """Check for a match."""
-        matches = []
+        possible_matches = []
         if service_info.name and len(service_info.name) >= LOCAL_NAME_MIN_MATCH_LENGTH:
-            for matcher in self.local_name.get(
-                service_info.name[:LOCAL_NAME_MIN_MATCH_LENGTH], []
-            ):
-                if ble_device_matches(matcher, service_info):
-                    matches.append(matcher)
+            possible_matches.extend(
+                self.local_name.get(service_info.name[:LOCAL_NAME_MIN_MATCH_LENGTH], [])
+            )
+        data_types: list[tuple[set[Any], Any, Any]] = [
+            (
+                self.service_data_uuid_set,
+                service_info.service_data,
+                self.service_data_uuid,
+            ),
+            (
+                self.manufacturer_id_set,
+                service_info.manufacturer_data,
+                self.manufacturer_id,
+            ),
+            (self.service_uuid_set, service_info.service_uuids, self.service_uuid),
+        ]
+        for data_set, data_info, data_collection in data_types:
+            if data_set and data_info:
+                for possible_match in data_set.intersection(data_info):
+                    possible_matches.extend(data_collection[possible_match])
 
-        if self.service_data_uuid_set and service_info.service_data:
-            for service_data_uuid in self.service_data_uuid_set.intersection(
-                service_info.service_data
-            ):
-                for matcher in self.service_data_uuid[service_data_uuid]:
-                    if ble_device_matches(matcher, service_info):
-                        matches.append(matcher)
-
-        if self.manufacturer_id_set and service_info.manufacturer_data:
-            for manufacturer_id in self.manufacturer_id_set.intersection(
-                service_info.manufacturer_data
-            ):
-                for matcher in self.manufacturer_id[manufacturer_id]:
-                    if ble_device_matches(matcher, service_info):
-                        matches.append(matcher)
-
-        if self.service_uuid_set and service_info.service_uuids:
-            for service_uuid in self.service_uuid_set.intersection(
-                service_info.service_uuids
-            ):
-                for matcher in self.service_uuid[service_uuid]:
-                    if ble_device_matches(matcher, service_info):
-                        matches.append(matcher)
-
-        return matches
+        return list(
+            filter(
+                lambda matcher: ble_device_matches(matcher, service_info),
+                possible_matches,
+            )
+        )
 
 
 class BluetoothMatcherIndex(BluetoothMatcherIndexBase[BluetoothMatcher]):

@@ -374,42 +374,48 @@ def ble_device_matches(
     # Don't check address here since all callers already
     # check the address and we don't want to double check
     # since it would result in an unreachable reject case.
-    if matcher.get(CONNECTABLE, True) and not service_info.connectable:
-        return False
 
     advertisement_data = service_info.advertisement
-    if (
-        service_uuid := matcher.get(SERVICE_UUID)
-    ) and service_uuid not in advertisement_data.service_uuids:
-        return False
 
-    if (
-        service_data_uuid := matcher.get(SERVICE_DATA_UUID)
-    ) and service_data_uuid not in advertisement_data.service_data:
-        return False
+    connectable_check = not matcher.get(CONNECTABLE, True) or service_info.connectable
 
-    if manfacturer_id := matcher.get(MANUFACTURER_ID):
-        if manfacturer_id not in advertisement_data.manufacturer_data:
-            return False
-        if manufacturer_data_start := matcher.get(MANUFACTURER_DATA_START):
-            manufacturer_data_start_bytes = bytearray(manufacturer_data_start)
-            if not any(
-                manufacturer_data.startswith(manufacturer_data_start_bytes)
-                for manufacturer_data in advertisement_data.manufacturer_data.values()
-            ):
-                return False
+    service_uuid_check = (
+        not matcher.get(SERVICE_UUID)
+        or matcher.get(SERVICE_UUID) in advertisement_data.service_uuids
+    )
 
-    if (local_name := matcher.get(LOCAL_NAME)) and (
-        (device_name := advertisement_data.local_name or service_info.device.name)
-        is None
-        or not _memorized_fnmatch(
-            device_name,
-            local_name,
-        )
-    ):
-        return False
+    service_data_uuid_check = (
+        not matcher.get(SERVICE_DATA_UUID)
+        or matcher.get(SERVICE_DATA_UUID) in advertisement_data.service_data
+    )
 
-    return True
+    manufacturer_id = matcher.get(MANUFACTURER_ID)
+    manufacturer_data_start = matcher.get(MANUFACTURER_DATA_START)
+
+    manufacturer_id_check = (
+        not manufacturer_id or manufacturer_id in advertisement_data.manufacturer_data
+    )
+
+    manufacturer_data_start_check = not manufacturer_data_start or any(
+        manufacturer_data.startswith(bytearray(manufacturer_data_start))
+        for manufacturer_data in advertisement_data.manufacturer_data.values()
+    )
+
+    local_name = matcher.get(LOCAL_NAME)
+    device_name = advertisement_data.local_name or service_info.device.name
+
+    local_name_check = not local_name or (
+        device_name is not None and _memorized_fnmatch(device_name, local_name)
+    )
+
+    return (
+        connectable_check
+        and service_uuid_check
+        and service_data_uuid_check
+        and manufacturer_id_check
+        and manufacturer_data_start_check
+        and local_name_check
+    )
 
 
 @lru_cache(maxsize=4096, typed=True)

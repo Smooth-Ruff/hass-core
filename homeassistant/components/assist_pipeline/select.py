@@ -1,5 +1,6 @@
 """Select entities for a pipeline."""
 
+
 from __future__ import annotations
 
 from collections.abc import Iterable
@@ -104,7 +105,7 @@ class AssistPipelineSelect(SelectEntity, restore_state.RestoreEntity):
         self.async_write_ha_state()
 
     async def _pipelines_updated(
-        self, change_sets: Iterable[collection.CollectionChangeSet]
+        self, _: Iterable[collection.CollectionChangeSet]
     ) -> None:
         """Handle pipeline update."""
         self._update_options()

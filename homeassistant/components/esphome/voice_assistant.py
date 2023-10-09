@@ -25,7 +25,7 @@ from homeassistant.components.assist_pipeline import (
     select as pipeline_select,
 )
 from homeassistant.components.assist_pipeline.error import (
-    WakeWordDetectionAborted,
+    WakeWordDetectionAbortedError,
     WakeWordDetectionError,
 )
 from homeassistant.components.media_player import async_process_play_media_url
@@ -277,7 +277,7 @@ class VoiceAssistantUDPServer(asyncio.DatagramProtocol):
                 },
             )
             _LOGGER.warning("Pipeline not found")
-        except WakeWordDetectionAborted:
+        except WakeWordDetectionAbortedError:
             pass  # Wake word detection was aborted and `handle_finished` is enough.
         except WakeWordDetectionError as e:
             self.handle_event(

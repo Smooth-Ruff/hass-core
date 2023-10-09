@@ -13,7 +13,7 @@ from homeassistant.components.assist_pipeline import (
     PipelineStage,
 )
 from homeassistant.components.assist_pipeline.error import (
-    WakeWordDetectionAborted,
+    WakeWordDetectionAbortedError,
     WakeWordDetectionError,
 )
 from homeassistant.components.esphome import DomainData
@@ -423,7 +423,7 @@ async def test_wake_word_abort_exception(
     """Test that the pipeline is set to start with Wake word."""
 
     async def async_pipeline_from_audio_stream(*args, **kwargs):
-        raise WakeWordDetectionAborted
+        raise WakeWordDetectionAbortedError
 
     with patch(
         "homeassistant.components.esphome.voice_assistant.async_pipeline_from_audio_stream",

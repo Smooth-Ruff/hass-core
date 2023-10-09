@@ -70,7 +70,7 @@ def verify_connected(func: _WrapFuncType) -> _WrapFuncType:
 
     async def _async_wrap_bluetooth_connected_operation(
         self: ESPHomeClient, *args, **kwargs
-    ) -> Any:
+    ) -> _WrapFuncType:
         # pylint: disable=protected-access
         loop = self._loop
         disconnected_futures = self._disconnected_futures

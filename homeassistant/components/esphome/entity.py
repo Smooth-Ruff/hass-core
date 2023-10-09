@@ -40,7 +40,6 @@ async def platform_async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
-    
     info_type: type[_InfoT],
     entity_type: type[_EntityT],
     state_type: type[_StateT],

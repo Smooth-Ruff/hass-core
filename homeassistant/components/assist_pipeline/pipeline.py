@@ -1236,21 +1236,6 @@ def _pipeline_debug_recording_thread_proc(
             wav_writer.close()
 
 
-async def buffer_then_audio_stream(
-    stt_audio_buffer: list[ProcessedAudioChunk],
-    stt_processed_stream: AsyncIterable[ProcessedAudioChunk] | None = None,
-) -> AsyncGenerator[ProcessedAudioChunk, None]:
-    """Resolve audio stream."""
-    # Buffered audio
-    for chunk in stt_audio_buffer:
-        yield chunk
-
-    # Streamed audio
-    assert stt_processed_stream is not None
-    async for chunk in stt_processed_stream:
-        yield chunk
-
-
 @dataclass
 class PipelineInput:
     """Input to a pipeline run."""
@@ -1290,59 +1275,19 @@ class PipelineInput:
 
         try:
             if current_stage == PipelineStage.WAKE_WORD:
-                # wake-word-detection
-                assert stt_processed_stream is not None
-                detect_result = await self.run.wake_word_detection(
+                current_stage = await self.run_wake_word_stage(
                     stt_processed_stream, stt_audio_buffer
                 )
-                if detect_result is None:
-                    # No wake word. Abort the rest of the pipeline.
-                    return
-
-                current_stage = PipelineStage.STT
-
             # speech-to-text
             intent_input = self.intent_input
             if current_stage == PipelineStage.STT:
-                assert self.stt_metadata is not None
-                assert stt_processed_stream is not None
-
-                stt_input_stream = stt_processed_stream
-
-                if stt_audio_buffer:
-                    # Send audio in the buffer first to speech-to-text, then move on to stt_stream.
-                    # This is basically an async itertools.chain.
-
-                    stt_input_stream = buffer_then_audio_stream(
-                        stt_audio_buffer, stt_processed_stream
-                    )
-
-                intent_input = await self.run.speech_to_text(
-                    self.stt_metadata,
-                    stt_input_stream,
+                current_stage, intent_input = await self.run_stt_stage(
+                    stt_processed_stream, stt_audio_buffer
                 )
-                current_stage = PipelineStage.INTENT
 
             if self.run.end_stage != PipelineStage.STT:
                 tts_input = self.tts_input
-
-                if current_stage == PipelineStage.INTENT:
-                    # intent-recognition
-                    assert intent_input is not None
-                    tts_input = await self.run.recognize_intent(
-                        intent_input,
-                        self.conversation_id,
-                        self.device_id,
-                    )
-                    current_stage = PipelineStage.TTS
-
-                if (
-                    self.run.end_stage != PipelineStage.INTENT
-                    and current_stage == PipelineStage.TTS
-                ):
-                    # text-to-speech
-                    assert tts_input is not None
-                    await self.run.text_to_speech(tts_input)
+                await self.run_final_stage(tts_input, intent_input, current_stage)
 
         except PipelineError as err:
             self.run.process_event(
@@ -1355,6 +1300,87 @@ class PipelineInput:
             # Always end the run since it needs to shut down the debug recording
             # thread, etc.
             await self.run.end()
+
+    async def run_wake_word_stage(
+        self,
+        stt_processed_stream: AsyncIterable[ProcessedAudioChunk] | None,
+        stt_audio_buffer: list[ProcessedAudioChunk],
+    ) -> PipelineStage | None:
+        """Execute the wake-word stage of the pipeline."""
+        # wake-word-detection
+        assert stt_processed_stream is not None
+        detect_result = await self.run.wake_word_detection(
+            stt_processed_stream, stt_audio_buffer
+        )
+        if detect_result is None:
+            # No wake word. Abort the rest of the pipeline.
+            return None
+        return PipelineStage.STT
+
+    async def run_stt_stage(
+        self,
+        stt_processed_stream: AsyncIterable[ProcessedAudioChunk] | None,
+        stt_audio_buffer: list[ProcessedAudioChunk],
+    ) -> tuple[PipelineStage, str]:
+        """Execute the speech-to-text stage of the pipeline."""
+        assert self.stt_metadata is not None
+        assert stt_processed_stream is not None
+
+        stt_input_stream = stt_processed_stream
+
+        if stt_audio_buffer:
+            # Send audio in the buffer first to speech-to-text, then move on to stt_stream.
+            # This is basically an async itertools.chain.
+
+            stt_input_stream = self.buffer_then_audio_stream(
+                stt_audio_buffer, stt_processed_stream
+            )
+
+        intent_input = await self.run.speech_to_text(
+            self.stt_metadata,
+            stt_input_stream,
+        )
+        return PipelineStage.INTENT, intent_input
+
+    async def run_final_stage(
+        self,
+        tts_input: str | None,
+        intent_input: str | None,
+        current_stage: PipelineStage | None,
+    ) -> None:
+        """Run the intent, text-to-speech, or both stages."""
+        if current_stage == PipelineStage.INTENT:
+            # intent-recognition
+            assert intent_input is not None
+            tts_input = await self.run.recognize_intent(
+                intent_input,
+                self.conversation_id,
+                self.device_id,
+            )
+            current_stage = PipelineStage.TTS
+
+        if (
+            self.run.end_stage != PipelineStage.INTENT
+            and current_stage == PipelineStage.TTS
+        ):
+            # text-to-speech
+            assert tts_input is not None
+            await self.run.text_to_speech(tts_input)
+
+    async def buffer_then_audio_stream(
+        self,
+        stt_audio_buffer: list[ProcessedAudioChunk],
+        stt_processed_stream: AsyncIterable[ProcessedAudioChunk] | None = None,
+    ) -> AsyncGenerator[ProcessedAudioChunk, None]:
+        """Resolve audio stream."""
+        # Buffered audio
+        for chunk in stt_audio_buffer:
+            yield chunk
+
+        # Streamed audio
+        assert stt_processed_stream is not None
+        async for chunk in stt_processed_stream:
+            yield chunk
 
     async def validate(self) -> None:
         """Validate pipeline input against start stage."""

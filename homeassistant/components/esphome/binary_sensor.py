@@ -42,7 +42,7 @@ class EsphomeBinarySensor(
     """A binary sensor implementation for ESPHome."""
 
     @property
-    def is_on(self) -> bool | None:
+    def is_on(self:EsphomeBinarySensor) -> bool | None:
         """Return true if the binary sensor is on."""
         if self._static_info.is_status_binary_sensor:
             # Status binary sensors indicated connected state.
@@ -53,7 +53,7 @@ class EsphomeBinarySensor(
         return self._state.state
 
     @callback
-    def _on_static_info_update(self, static_info: EntityInfo) -> None:
+    def _on_static_info_update(self:EsphomeBinarySensor, static_info: EntityInfo) -> None:
         """Set attrs from static info."""
         super()._on_static_info_update(static_info)
         self._attr_device_class = try_parse_enum(
@@ -61,7 +61,7 @@ class EsphomeBinarySensor(
         )
 
     @property
-    def available(self) -> bool:
+    def available(self:EsphomeBinarySensor) -> bool:
         """Return True if entity is available."""
         return self._static_info.is_status_binary_sensor or super().available
 
@@ -75,6 +75,6 @@ class EsphomeAssistInProgressBinarySensor(EsphomeAssistEntity, BinarySensorEntit
     )
 
     @property
-    def is_on(self) -> bool | None:
+    def is_on(self:EsphomeAssistInProgressBinarySensor) -> bool | None:
         """Return true if the binary sensor is on."""
         return self._entry_data.assist_pipeline_state

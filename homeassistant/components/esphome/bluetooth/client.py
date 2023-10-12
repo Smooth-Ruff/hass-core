@@ -69,8 +69,8 @@ def verify_connected(func: _WrapFuncType) -> _WrapFuncType:
     """Define a wrapper throw BleakError if not connected."""
 
     async def _async_wrap_bluetooth_connected_operation(
-        self: ESPHomeClient, *args: Any, **kwargs: Any
-    ) -> Any:
+        self: ESPHomeClient, *args, **kwargs
+    ) -> _WrapFuncType:
         # pylint: disable=protected-access
         loop = self._loop
         disconnected_futures = self._disconnected_futures
@@ -94,7 +94,7 @@ def api_error_as_bleak_error(func: _WrapFuncType) -> _WrapFuncType:
     """Define a wrapper throw esphome api errors as BleakErrors."""
 
     async def _async_wrap_bluetooth_operation(
-        self: ESPHomeClient, *args: Any, **kwargs: Any
+        self: ESPHomeClient, *args, **kwargs
     ) -> Any:
         try:
             return await func(self, *args, **kwargs)
@@ -144,11 +144,11 @@ class ESPHomeClient(BaseBleakClient):
     """ESPHome Bleak Client."""
 
     def __init__(
-        self,
+        self:ESPHomeClient,
         address_or_ble_device: BLEDevice | str,
-        *args: Any,
+        *args,
         client_data: ESPHomeClientData,
-        **kwargs: Any,
+        **kwargs,
     ) -> None:
         """Initialize the ESPHomeClient."""
         device_info = client_data.device_info
@@ -180,11 +180,11 @@ class ESPHomeClient(BaseBleakClient):
         assert scanner is not None
         self._scanner = scanner
 
-    def __str__(self) -> str:
+    def __str__(self:ESPHomeClient) -> str:
         """Return the string representation of the client."""
         return f"ESPHomeClient ({self.address})"
 
-    def _unsubscribe_connection_state(self) -> None:
+    def _unsubscribe_connection_state(self:ESPHomeClient) -> None:
         """Unsubscribe from connection state updates."""
         if not self._cancel_connection_state:
             return
@@ -203,7 +203,7 @@ class ESPHomeClient(BaseBleakClient):
             )
         self._cancel_connection_state = None
 
-    def _async_disconnected_cleanup(self) -> None:
+    def _async_disconnected_cleanup(self:ESPHomeClient) -> None:
         """Clean up on disconnect."""
         self.services = BleakGATTServiceCollection()  # type: ignore[no-untyped-call]
         self._is_connected = False

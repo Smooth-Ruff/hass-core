@@ -1,7 +1,7 @@
 """Support for ESPHome covers."""
 from __future__ import annotations
 
-from typing import Any
+# from typing import Any
 
 from aioesphomeapi import APIVersion, CoverInfo, CoverOperation, CoverState, EntityInfo
 
@@ -38,7 +38,7 @@ class EsphomeCover(EsphomeEntity[CoverInfo, CoverState], CoverEntity):
     """A cover implementation for ESPHome."""
 
     @callback
-    def _on_static_info_update(self, static_info: EntityInfo) -> None:
+    def _on_static_info_update(self:EsphomeCover, static_info: EntityInfo) -> None:
         """Set attrs from static info."""
         super()._on_static_info_update(static_info)
         static_info = self._static_info
@@ -61,26 +61,26 @@ class EsphomeCover(EsphomeEntity[CoverInfo, CoverState], CoverEntity):
 
     @property
     @esphome_state_property
-    def is_closed(self) -> bool | None:
+    def is_closed(self:EsphomeCover) -> bool | None:
         """Return if the cover is closed or not."""
         # Check closed state with api version due to a protocol change
         return self._state.is_closed(self._api_version)
 
     @property
     @esphome_state_property
-    def is_opening(self) -> bool:
+    def is_opening(self:EsphomeCover) -> bool:
         """Return if the cover is opening or not."""
         return self._state.current_operation == CoverOperation.IS_OPENING
 
     @property
     @esphome_state_property
-    def is_closing(self) -> bool:
+    def is_closing(self:EsphomeCover) -> bool:
         """Return if the cover is closing or not."""
         return self._state.current_operation == CoverOperation.IS_CLOSING
 
     @property
     @esphome_state_property
-    def current_cover_position(self) -> int | None:
+    def current_cover_position(self:EsphomeCover) -> int | None:
         """Return current position of cover. 0 is closed, 100 is open."""
         if not self._static_info.supports_position:
             return None
@@ -88,39 +88,39 @@ class EsphomeCover(EsphomeEntity[CoverInfo, CoverState], CoverEntity):
 
     @property
     @esphome_state_property
-    def current_cover_tilt_position(self) -> int | None:
+    def current_cover_tilt_position(self:EsphomeCover) -> int | None:
         """Return current position of cover tilt. 0 is closed, 100 is open."""
         if not self._static_info.supports_tilt:
             return None
         return round(self._state.tilt * 100.0)
 
-    async def async_open_cover(self, **kwargs: Any) -> None:
+    async def async_open_cover(self:EsphomeCover, **kwargs) -> None:
         """Open the cover."""
         await self._client.cover_command(key=self._key, position=1.0)
 
-    async def async_close_cover(self, **kwargs: Any) -> None:
+    async def async_close_cover(self:EsphomeCover, **kwargs) -> None:
         """Close cover."""
         await self._client.cover_command(key=self._key, position=0.0)
 
-    async def async_stop_cover(self, **kwargs: Any) -> None:
+    async def async_stop_cover(self:EsphomeCover, **kwargs) -> None:
         """Stop the cover."""
         await self._client.cover_command(key=self._key, stop=True)
 
-    async def async_set_cover_position(self, **kwargs: Any) -> None:
+    async def async_set_cover_position(self:EsphomeCover, **kwargs) -> None:
         """Move the cover to a specific position."""
         await self._client.cover_command(
             key=self._key, position=kwargs[ATTR_POSITION] / 100
         )
 
-    async def async_open_cover_tilt(self, **kwargs: Any) -> None:
+    async def async_open_cover_tilt(self:EsphomeCover, **kwargs) -> None:
         """Open the cover tilt."""
         await self._client.cover_command(key=self._key, tilt=1.0)
 
-    async def async_close_cover_tilt(self, **kwargs: Any) -> None:
+    async def async_close_cover_tilt(self:EsphomeCover, **kwargs) -> None:
         """Close the cover tilt."""
         await self._client.cover_command(key=self._key, tilt=0.0)
 
-    async def async_set_cover_tilt_position(self, **kwargs: Any) -> None:
+    async def async_set_cover_tilt_position(self:EsphomeCover, **kwargs) -> None:
         """Move the cover tilt to a specific position."""
         tilt_position: int = kwargs[ATTR_TILT_POSITION]
         await self._client.cover_command(key=self._key, tilt=tilt_position / 100)

@@ -84,7 +84,7 @@ class EsphomeAlarmControlPanel(
     """An Alarm Control Panel implementation for ESPHome."""
 
     @callback
-    def _on_static_info_update(self, static_info: EntityInfo) -> None:
+    def _on_static_info_update(self:EsphomeAlarmControlPanel, static_info: EntityInfo) -> None:
         """Set attrs from static info."""
         super()._on_static_info_update(static_info)
         static_info = self._static_info
@@ -109,47 +109,47 @@ class EsphomeAlarmControlPanel(
 
     @property
     @esphome_state_property
-    def state(self) -> str | None:
+    def state(self:EsphomeAlarmControlPanel) -> str | None:
         """Return the state of the device."""
         return _ESPHOME_ACP_STATE_TO_HASS_STATE.from_esphome(self._state.state)
 
-    async def async_alarm_disarm(self, code: str | None = None) -> None:
+    async def async_alarm_disarm(self:EsphomeAlarmControlPanel, code: str | None = None) -> None:
         """Send disarm command."""
         await self._client.alarm_control_panel_command(
             self._key, AlarmControlPanelCommand.DISARM, code
         )
 
-    async def async_alarm_arm_home(self, code: str | None = None) -> None:
+    async def async_alarm_arm_home(self:EsphomeAlarmControlPanel, code: str | None = None) -> None:
         """Send arm home command."""
         await self._client.alarm_control_panel_command(
             self._key, AlarmControlPanelCommand.ARM_HOME, code
         )
 
-    async def async_alarm_arm_away(self, code: str | None = None) -> None:
+    async def async_alarm_arm_away(self:EsphomeAlarmControlPanel, code: str | None = None) -> None:
         """Send arm away command."""
         await self._client.alarm_control_panel_command(
             self._key, AlarmControlPanelCommand.ARM_AWAY, code
         )
 
-    async def async_alarm_arm_night(self, code: str | None = None) -> None:
+    async def async_alarm_arm_night(self:EsphomeAlarmControlPanel, code: str | None = None) -> None:
         """Send arm away command."""
         await self._client.alarm_control_panel_command(
             self._key, AlarmControlPanelCommand.ARM_NIGHT, code
         )
 
-    async def async_alarm_arm_custom_bypass(self, code: str | None = None) -> None:
+    async def async_alarm_arm_custom_bypass(self:EsphomeAlarmControlPanel, code: str | None = None) -> None:
         """Send arm away command."""
         await self._client.alarm_control_panel_command(
             self._key, AlarmControlPanelCommand.ARM_CUSTOM_BYPASS, code
         )
 
-    async def async_alarm_arm_vacation(self, code: str | None = None) -> None:
+    async def async_alarm_arm_vacation(self:EsphomeAlarmControlPanel, code: str | None = None) -> None:
         """Send arm away command."""
         await self._client.alarm_control_panel_command(
             self._key, AlarmControlPanelCommand.ARM_VACATION, code
         )
 
-    async def async_alarm_trigger(self, code: str | None = None) -> None:
+    async def async_alarm_trigger(self:EsphomeAlarmControlPanel, code: str | None = None) -> None:
         """Send alarm trigger command."""
         await self._client.alarm_control_panel_command(
             self._key, AlarmControlPanelCommand.TRIGGER, code

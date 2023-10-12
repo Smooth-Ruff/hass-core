@@ -33,7 +33,7 @@ class BleakGATTCharacteristicESPHome(BleakGATTCharacteristic):
     obj: BluetoothGATTCharacteristic
 
     def __init__(
-        self,
+        self:BleakGATTCharacteristicESPHome,
         obj: BluetoothGATTCharacteristic,
         max_write_without_response_size: int,
         service_uuid: str,
@@ -50,36 +50,36 @@ class BleakGATTCharacteristicESPHome(BleakGATTCharacteristic):
         ]
 
     @property
-    def service_uuid(self) -> str:
+    def service_uuid(self:BleakGATTCharacteristicESPHome) -> str:
         """Uuid of the Service containing this characteristic."""
         return self.__service_uuid
 
     @property
-    def service_handle(self) -> int:
+    def service_handle(self:BleakGATTCharacteristicESPHome) -> int:
         """Integer handle of the Service containing this characteristic."""
         return self.__service_handle
 
     @property
-    def handle(self) -> int:
+    def handle(self:BleakGATTCharacteristicESPHome) -> int:
         """Integer handle for this characteristic."""
         return self.obj.handle
 
     @property
-    def uuid(self) -> str:
+    def uuid(self:BleakGATTCharacteristicESPHome) -> str:
         """Uuid of this characteristic."""
         return self.obj.uuid
 
     @property
-    def properties(self) -> list[str]:
+    def properties(self:BleakGATTCharacteristicESPHome) -> list[str]:
         """Properties of this characteristic."""
         return self.__props
 
     @property
-    def descriptors(self) -> list[BleakGATTDescriptor]:
+    def descriptors(self:BleakGATTCharacteristicESPHome) -> list[BleakGATTDescriptor]:
         """List of descriptors for this service."""
         return self.__descriptors
 
-    def get_descriptor(self, specifier: int | str | UUID) -> BleakGATTDescriptor | None:
+    def get_descriptor(self:BleakGATTCharacteristicESPHome, specifier: int | str | UUID) -> BleakGATTDescriptor | None:
         """Get a descriptor by handle (int) or UUID (str or uuid.UUID)."""
         with contextlib.suppress(StopIteration):
             if isinstance(specifier, int):
@@ -87,7 +87,7 @@ class BleakGATTCharacteristicESPHome(BleakGATTCharacteristic):
             return next(filter(lambda x: x.uuid == str(specifier), self.descriptors))
         return None
 
-    def add_descriptor(self, descriptor: BleakGATTDescriptor) -> None:
+    def add_descriptor(self:BleakGATTCharacteristicESPHome, descriptor: BleakGATTDescriptor) -> None:
         """Add a :py:class:`~BleakGATTDescriptor` to the characteristic.
 
         Should not be used by end user, but rather by `bleak` itself.

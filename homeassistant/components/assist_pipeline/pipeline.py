@@ -61,7 +61,7 @@ from .error import (
     PipelineNotFound,
     SpeechToTextError,
     TextToSpeechError,
-    WakeWordDetectionAborted,
+    WakeWordDetectionAbortedError,
     WakeWordDetectionError,
     WakeWordTimeoutError,
 )
@@ -72,6 +72,10 @@ _LOGGER = logging.getLogger(__name__)
 STORAGE_KEY = f"{DOMAIN}.pipelines"
 STORAGE_VERSION = 1
 STORAGE_VERSION_MINOR = 2
+
+MAX_NOISE_SUPRESSION_LEVEL = 4
+
+MAX_AUTO_GAIN_DBFS = 31
 
 ENGINE_LANGUAGE_PAIRS = (
     ("stt_engine", "stt_language"),
@@ -119,18 +123,49 @@ async def _async_resolve_default_pipeline_settings(
     The default pipeline will use the homeassistant conversation agent and the
     default stt / tts engines if none are specified.
     """
-    conversation_language = "en"
-    pipeline_language = "en"
-    pipeline_name = "Home Assistant"
-    stt_engine = None
     stt_language = None
-    tts_engine = None
     tts_language = None
     tts_voice = None
     wake_word_entity = None
     wake_word_id = None
 
     # Find a matching language supported by the Home Assistant conversation agent
+    conversation_language, pipeline_language, pipeline_name = await _resolve_languages(
+        hass
+    )
+    # Resolve STT engine and language for the given engine ID
+    stt_engine_id, stt_language = await _resolve_stt_engine(
+        hass, stt_engine_id, pipeline_language
+    )
+    # Resolve TTS engine, language, and voice for the given engine ID.
+    tts_engine_id, tts_language, tts_voice = await _resolve_tts_engine(
+        hass, tts_engine_id, pipeline_language
+    )
+
+    if stt_engine_id == "cloud" and tts_engine_id == "cloud":
+        pipeline_name = "Home Assistant Cloud"
+
+    return {
+        "conversation_engine": conversation.HOME_ASSISTANT_AGENT,
+        "conversation_language": conversation_language,
+        "language": hass.config.language,
+        "name": pipeline_name,
+        "stt_engine": stt_engine_id,
+        "stt_language": stt_language,
+        "tts_engine": tts_engine_id,
+        "tts_language": tts_language,
+        "tts_voice": tts_voice,
+        "wake_word_entity": wake_word_entity,
+        "wake_word_id": wake_word_id,
+    }
+
+
+async def _resolve_languages(hass: HomeAssistant) -> tuple:
+    """Resolve conversation and pipeline languages."""
+    conversation_language = "en"
+    pipeline_language = "en"
+    pipeline_name = "Home Assistant"
+
     conversation_languages = language_util.matches(
         hass.config.language,
         await conversation.async_get_conversation_languages(
@@ -142,6 +177,16 @@ async def _async_resolve_default_pipeline_settings(
         pipeline_language = hass.config.language
         conversation_language = conversation_languages[0]
 
+    return conversation_language, pipeline_language, pipeline_name
+
+
+async def _resolve_stt_engine(
+    hass: HomeAssistant, stt_engine_id: str | None, pipeline_language: str
+) -> tuple:
+    """Resolve STT engine and language."""
+    stt_engine = None
+    stt_language = None
+
     if stt_engine_id is None:
         stt_engine_id = stt.async_default_engine(hass)
 
@@ -150,7 +195,7 @@ async def _async_resolve_default_pipeline_settings(
         if stt_engine is None:
             stt_engine_id = None
 
-    if stt_engine:
+    if stt_engine is not None:
         stt_languages = language_util.matches(
             pipeline_language,
             stt_engine.supported_languages,
@@ -166,6 +211,17 @@ async def _async_resolve_default_pipeline_settings(
             )
             stt_engine_id = None
 
+    return stt_engine_id, stt_language
+
+
+async def _resolve_tts_engine(
+    hass: HomeAssistant, tts_engine_id: str | None, pipeline_language: str
+) -> tuple:
+    """Resolve TTS engine, language, and voice."""
+    tts_engine = None
+    tts_language = None
+    tts_voice = None
+
     if tts_engine_id is None:
         tts_engine_id = tts.async_default_engine(hass)
 
@@ -174,7 +230,7 @@ async def _async_resolve_default_pipeline_settings(
         if tts_engine is None:
             tts_engine_id = None
 
-    if tts_engine:
+    if tts_engine is not None:
         tts_languages = language_util.matches(
             pipeline_language,
             tts_engine.supported_languages,
@@ -193,22 +249,7 @@ async def _async_resolve_default_pipeline_settings(
             )
             tts_engine_id = None
 
-    if stt_engine_id == "cloud" and tts_engine_id == "cloud":
-        pipeline_name = "Home Assistant Cloud"
-
-    return {
-        "conversation_engine": conversation.HOME_ASSISTANT_AGENT,
-        "conversation_language": conversation_language,
-        "language": hass.config.language,
-        "name": pipeline_name,
-        "stt_engine": stt_engine_id,
-        "stt_language": stt_language,
-        "tts_engine": tts_engine_id,
-        "tts_language": tts_language,
-        "tts_voice": tts_voice,
-        "wake_word_entity": wake_word_entity,
-        "wake_word_id": wake_word_id,
-    }
+    return tts_engine_id, tts_language, tts_voice
 
 
 async def _async_create_default_pipeline(
@@ -430,10 +471,12 @@ class AudioSettings:
 
     def __post_init__(self) -> None:
         """Verify settings post-initialization."""
-        if (self.noise_suppression_level < 0) or (self.noise_suppression_level > 4):
+        if (self.noise_suppression_level < 0) or (
+            self.noise_suppression_level > MAX_NOISE_SUPRESSION_LEVEL
+        ):
             raise ValueError("noise_suppression_level must be in [0, 4]")
 
-        if (self.auto_gain_dbfs < 0) or (self.auto_gain_dbfs > 31):
+        if (self.auto_gain_dbfs < 0) or (self.auto_gain_dbfs > MAX_AUTO_GAIN_DBFS):
             raise ValueError("auto_gain_dbfs must be in [0, 31]")
 
         if self.needs_processor and (not self.is_chunking_enabled):
@@ -663,7 +706,7 @@ class PipelineRun:
                 # All audio kept from right before the wake word was detected as
                 # a single chunk.
                 audio_chunks_for_stt.extend(stt_audio_buffer)
-        except WakeWordDetectionAborted:
+        except WakeWordDetectionAbortedError:
             raise
         except WakeWordTimeoutError:
             _LOGGER.debug("Timeout during wake word detection")
@@ -725,7 +768,6 @@ class PipelineRun:
         stt_audio_buffer: deque[ProcessedAudioChunk] | None,
         wake_word_vad: VoiceActivityTimeout | None,
         sample_rate: int = 16000,
-        sample_width: int = 2,
     ) -> AsyncIterable[tuple[bytes, int]]:
         """Yield audio chunks with timestamps (milliseconds since start of stream).
 
@@ -735,7 +777,7 @@ class PipelineRun:
         chunk_seconds = AUDIO_PROCESSOR_SAMPLES / sample_rate
         async for chunk in audio_stream:
             if self.abort_wake_word_detection:
-                raise WakeWordDetectionAborted
+                raise WakeWordDetectionAbortedError
 
             if self.debug_recording_queue is not None:
                 self.debug_recording_queue.put_nowait(chunk.audio)
@@ -748,11 +790,12 @@ class PipelineRun:
             if stt_audio_buffer is not None:
                 stt_audio_buffer.append(chunk)
 
-            if wake_word_vad is not None:
-                if not wake_word_vad.process(chunk_seconds, chunk.is_speech):
-                    raise WakeWordTimeoutError(
-                        code="wake-word-timeout", message="Wake word was not detected"
-                    )
+            if wake_word_vad is not None and not wake_word_vad.process(
+                chunk_seconds, chunk.is_speech
+            ):
+                raise WakeWordTimeoutError(
+                    code="wake-word-timeout", message="Wake word was not detected"
+                )
 
     async def prepare_speech_to_text(self, metadata: stt.SpeechMetadata) -> None:
         """Prepare speech-to-text."""
@@ -855,7 +898,6 @@ class PipelineRun:
         audio_stream: AsyncIterable[ProcessedAudioChunk],
         stt_vad: VoiceCommandSegmenter | None,
         sample_rate: int = 16000,
-        sample_width: int = 2,
     ) -> AsyncGenerator[bytes, None]:
         """Yield audio chunks until VAD detects silence or speech-to-text completes."""
         chunk_seconds = AUDIO_PROCESSOR_SAMPLES / sample_rate
@@ -1205,10 +1247,9 @@ def _pipeline_debug_recording_thread_proc(
                 wav_writer.setframerate(16000)
                 wav_writer.setsampwidth(2)
                 wav_writer.setnchannels(1)
-            elif isinstance(message, bytes):
+            elif isinstance(message, bytes) and wav_writer is not None:
                 # Chunk of 16-bit mono audio at 16Khz
-                if wav_writer is not None:
-                    wav_writer.writeframes(message)
+                wav_writer.writeframes(message)
     except Exception:  # pylint: disable=broad-exception-caught
         _LOGGER.exception("Unexpected error in debug recording thread")
     finally:
@@ -1255,66 +1296,19 @@ class PipelineInput:
 
         try:
             if current_stage == PipelineStage.WAKE_WORD:
-                # wake-word-detection
-                assert stt_processed_stream is not None
-                detect_result = await self.run.wake_word_detection(
+                current_stage = await self.run_wake_word_stage(
                     stt_processed_stream, stt_audio_buffer
                 )
-                if detect_result is None:
-                    # No wake word. Abort the rest of the pipeline.
-                    return
-
-                current_stage = PipelineStage.STT
-
             # speech-to-text
             intent_input = self.intent_input
             if current_stage == PipelineStage.STT:
-                assert self.stt_metadata is not None
-                assert stt_processed_stream is not None
-
-                stt_input_stream = stt_processed_stream
-
-                if stt_audio_buffer:
-                    # Send audio in the buffer first to speech-to-text, then move on to stt_stream.
-                    # This is basically an async itertools.chain.
-                    async def buffer_then_audio_stream() -> AsyncGenerator[
-                        ProcessedAudioChunk, None
-                    ]:
-                        # Buffered audio
-                        for chunk in stt_audio_buffer:
-                            yield chunk
-
-                        # Streamed audio
-                        assert stt_processed_stream is not None
-                        async for chunk in stt_processed_stream:
-                            yield chunk
-
-                    stt_input_stream = buffer_then_audio_stream()
-
-                intent_input = await self.run.speech_to_text(
-                    self.stt_metadata,
-                    stt_input_stream,
+                current_stage, intent_input = await self.run_stt_stage(
+                    stt_processed_stream, stt_audio_buffer
                 )
-                current_stage = PipelineStage.INTENT
 
             if self.run.end_stage != PipelineStage.STT:
                 tts_input = self.tts_input
-
-                if current_stage == PipelineStage.INTENT:
-                    # intent-recognition
-                    assert intent_input is not None
-                    tts_input = await self.run.recognize_intent(
-                        intent_input,
-                        self.conversation_id,
-                        self.device_id,
-                    )
-                    current_stage = PipelineStage.TTS
-
-                if self.run.end_stage != PipelineStage.INTENT:
-                    # text-to-speech
-                    if current_stage == PipelineStage.TTS:
-                        assert tts_input is not None
-                        await self.run.text_to_speech(tts_input)
+                await self.run_final_stage(tts_input, intent_input, current_stage)
 
         except PipelineError as err:
             self.run.process_event(
@@ -1328,8 +1322,101 @@ class PipelineInput:
             # thread, etc.
             await self.run.end()
 
+    async def run_wake_word_stage(
+        self,
+        stt_processed_stream: AsyncIterable[ProcessedAudioChunk] | None,
+        stt_audio_buffer: list[ProcessedAudioChunk],
+    ) -> PipelineStage | None:
+        """Execute the wake-word stage of the pipeline."""
+        # wake-word-detection
+        assert stt_processed_stream is not None
+        detect_result = await self.run.wake_word_detection(
+            stt_processed_stream, stt_audio_buffer
+        )
+        if detect_result is None:
+            # No wake word. Abort the rest of the pipeline.
+            return None
+        return PipelineStage.STT
+
+    async def run_stt_stage(
+        self,
+        stt_processed_stream: AsyncIterable[ProcessedAudioChunk] | None,
+        stt_audio_buffer: list[ProcessedAudioChunk],
+    ) -> tuple[PipelineStage, str]:
+        """Execute the speech-to-text stage of the pipeline."""
+        assert self.stt_metadata is not None
+        assert stt_processed_stream is not None
+
+        stt_input_stream = stt_processed_stream
+
+        if stt_audio_buffer:
+            # Send audio in the buffer first to speech-to-text, then move on to stt_stream.
+            # This is basically an async itertools.chain.
+
+            stt_input_stream = self.buffer_then_audio_stream(
+                stt_audio_buffer, stt_processed_stream
+            )
+
+        intent_input = await self.run.speech_to_text(
+            self.stt_metadata,
+            stt_input_stream,
+        )
+        return PipelineStage.INTENT, intent_input
+
+    async def run_final_stage(
+        self,
+        tts_input: str | None,
+        intent_input: str | None,
+        current_stage: PipelineStage | None,
+    ) -> None:
+        """Run the intent, text-to-speech, or both stages."""
+        if current_stage == PipelineStage.INTENT:
+            # intent-recognition
+            assert intent_input is not None
+            tts_input = await self.run.recognize_intent(
+                intent_input,
+                self.conversation_id,
+                self.device_id,
+            )
+            current_stage = PipelineStage.TTS
+
+        if (
+            self.run.end_stage != PipelineStage.INTENT
+            and current_stage == PipelineStage.TTS
+        ):
+            # text-to-speech
+            assert tts_input is not None
+            await self.run.text_to_speech(tts_input)
+
+    async def buffer_then_audio_stream(
+        self,
+        stt_audio_buffer: list[ProcessedAudioChunk],
+        stt_processed_stream: AsyncIterable[ProcessedAudioChunk] | None = None,
+    ) -> AsyncGenerator[ProcessedAudioChunk, None]:
+        """Resolve audio stream."""
+        # Buffered audio
+        for chunk in stt_audio_buffer:
+            yield chunk
+
+        # Streamed audio
+        assert stt_processed_stream is not None
+        async for chunk in stt_processed_stream:
+            yield chunk
+
     async def validate(self) -> None:
         """Validate pipeline input against start stage."""
+        self.stage_validation()
+
+        start_stage_index = PIPELINE_STAGE_ORDER.index(self.run.start_stage)
+        end_stage_index = PIPELINE_STAGE_ORDER.index(self.run.end_stage)
+
+        prepare_tasks = self.prepare_tasks(start_stage_index, end_stage_index)
+
+        if prepare_tasks:
+            await asyncio.gather(*prepare_tasks)
+
+    def stage_validation(self) -> None:
+        """Ensure the stages are supported and have the necessary data to run."""
         if self.run.start_stage in (PipelineStage.WAKE_WORD, PipelineStage.STT):
             if self.run.pipeline.stt_engine is None:
                 raise PipelineRunValidationError(
@@ -1359,45 +1446,42 @@ class PipelineInput:
                     "the pipeline does not support text-to-speech"
                 )
 
-        start_stage_index = PIPELINE_STAGE_ORDER.index(self.run.start_stage)
-        end_stage_index = PIPELINE_STAGE_ORDER.index(self.run.end_stage)
+    def prepare_tasks(self, start_stage_index: int, end_stage_index: int) -> list:
+        """Return tasks to be executed based on the stage range provided."""
+        tasks = []
 
-        prepare_tasks = []
-
-        if (
-            start_stage_index
-            <= PIPELINE_STAGE_ORDER.index(PipelineStage.WAKE_WORD)
-            <= end_stage_index
+        if self.is_stage_between_indexes(
+            PipelineStage.WAKE_WORD, start_stage_index, end_stage_index
         ):
-            prepare_tasks.append(self.run.prepare_wake_word_detection())
+            tasks.append(self.run.prepare_wake_word_detection())
 
-        if (
-            start_stage_index
-            <= PIPELINE_STAGE_ORDER.index(PipelineStage.STT)
-            <= end_stage_index
+        if self.is_stage_between_indexes(
+            PipelineStage.STT, start_stage_index, end_stage_index
         ):
             # self.stt_metadata can't be None or we'd raise above
-            prepare_tasks.append(self.run.prepare_speech_to_text(self.stt_metadata))  # type: ignore[arg-type]
+            tasks.append(self.run.prepare_speech_to_text(self.stt_metadata))  # type: ignore[arg-type]
 
-        if (
-            start_stage_index
-            <= PIPELINE_STAGE_ORDER.index(PipelineStage.INTENT)
-            <= end_stage_index
+        if self.is_stage_between_indexes(
+            PipelineStage.INTENT, start_stage_index, end_stage_index
         ):
-            prepare_tasks.append(self.run.prepare_recognize_intent())
+            tasks.append(self.run.prepare_recognize_intent())
 
-        if (
-            start_stage_index
-            <= PIPELINE_STAGE_ORDER.index(PipelineStage.TTS)
-            <= end_stage_index
+        if self.is_stage_between_indexes(
+            PipelineStage.TTS, start_stage_index, end_stage_index
         ):
-            prepare_tasks.append(self.run.prepare_text_to_speech())
+            tasks.append(self.run.prepare_text_to_speech())
 
-        if prepare_tasks:
-            await asyncio.gather(*prepare_tasks)
+        return tasks
+
+    def is_stage_between_indexes(
+        self, stage: PipelineStage, start_index: int, end_index: int
+    ) -> bool:
+        """Check if the given stage is within the provided index range."""
+        stage_index = PIPELINE_STAGE_ORDER.index(stage)
+        return start_index <= stage_index <= end_index
 
 
-class PipelinePreferred(CollectionError):
+class PipelinePreferredError(CollectionError):
     """Raised when attempting to delete the preferred pipelen."""
 
     def __init__(self, item_id: str) -> None:
@@ -1436,7 +1520,7 @@ class PipelineStorageCollection(
         return validated_data
 
     @callback
-    def _get_suggested_id(self, info: dict) -> str:
+    def _get_suggested_id(self, _: dict) -> str:
         """Suggest an ID based on the config."""
         return ulid_util.ulid()
 
@@ -1453,14 +1537,14 @@ class PipelineStorageCollection(
         """Create an item from its serialized representation."""
         return Pipeline.from_json(data)
 
-    def _serialize_item(self, item_id: str, item: Pipeline) -> dict:
+    def _serialize_item(self, _: str, item: Pipeline) -> dict:
         """Return the serialized representation of an item for storing."""
         return item.to_json()
 
     async def async_delete_item(self, item_id: str) -> None:
         """Delete item."""
         if self._preferred_item == item_id:
-            raise PipelinePreferred(item_id)
+            raise PipelinePreferredError(item_id)
         await super().async_delete_item(item_id)
 
     @callback
@@ -1534,14 +1618,14 @@ class PipelineStorageCollectionWebsocket(
         """Delete an item."""
         try:
             await super().ws_delete_item(hass, connection, msg)
-        except PipelinePreferred as exc:
+        except PipelinePreferredError as exc:
             connection.send_error(
                 msg["id"], websocket_api.const.ERR_NOT_ALLOWED, str(exc)
             )
 
     @callback
     def ws_get_item(
-        self, hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict
+        self, _: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict
     ) -> None:
         """Get an item."""
         item_id = msg.get(self.item_id_key)
@@ -1560,7 +1644,7 @@ class PipelineStorageCollectionWebsocket(
 
     @callback
     def ws_list_item(
-        self, hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict
+        self, _: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict
     ) -> None:
         """List items."""
         connection.send_result(
@@ -1573,7 +1657,7 @@ class PipelineStorageCollectionWebsocket(
 
     async def ws_set_preferred_item(
         self,
-        hass: HomeAssistant,
+        _: HomeAssistant,
         connection: websocket_api.ActiveConnection,
         msg: dict[str, Any],
     ) -> None:
@@ -1607,9 +1691,7 @@ class PipelineRuns:
         pipeline_id = pipeline_run.pipeline.id
         self._pipeline_runs[pipeline_id].pop(pipeline_run.id)
 
-    async def _change_listener(
-        self, change_type: str, item_id: str, change: dict
-    ) -> None:
+    async def _change_listener(self, change_type: str, item_id: str, _: dict) -> None:
         """Handle pipeline store changes."""
         if change_type != CHANGE_UPDATED:
             return

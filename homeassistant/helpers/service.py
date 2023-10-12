@@ -606,7 +606,7 @@ async def async_get_all_descriptions(
         contents = await hass.async_add_executor_job(
             _load_services_files, hass, integrations
         )
-        loaded = dict(zip(missing, contents))
+        loaded = dict(zip(missing, contents, strict=True))
 
     # Load translations for all service domains
     translations = await translation.async_get_translations(

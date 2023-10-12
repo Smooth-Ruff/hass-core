@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from fnmatch import translate
 from functools import lru_cache
 import re
-from typing import TYPE_CHECKING, Final, Generic, TypedDict, TypeVar
+from typing import TYPE_CHECKING, Any, Final, Generic, TypedDict, TypeVar
 
 from lru import LRU  # pylint: disable=no-name-in-module
 
@@ -240,39 +240,35 @@ class BluetoothMatcherIndexBase(Generic[_T]):
 
     def match(self, service_info: BluetoothServiceInfoBleak) -> list[_T]:
         """Check for a match."""
-        matches = []
+        possible_matches = []
         if service_info.name and len(service_info.name) >= LOCAL_NAME_MIN_MATCH_LENGTH:
-            for matcher in self.local_name.get(
-                service_info.name[:LOCAL_NAME_MIN_MATCH_LENGTH], []
-            ):
-                if ble_device_matches(matcher, service_info):
-                    matches.append(matcher)
+            possible_matches.extend(
+                self.local_name.get(service_info.name[:LOCAL_NAME_MIN_MATCH_LENGTH], [])
+            )
+        data_types: list[tuple[set[Any], Any, Any]] = [
+            (
+                self.service_data_uuid_set,
+                service_info.service_data,
+                self.service_data_uuid,
+            ),
+            (
+                self.manufacturer_id_set,
+                service_info.manufacturer_data,
+                self.manufacturer_id,
+            ),
+            (self.service_uuid_set, service_info.service_uuids, self.service_uuid),
+        ]
+        for data_set, data_info, data_collection in data_types:
+            if data_set and data_info:
+                for possible_match in data_set.intersection(data_info):
+                    possible_matches.extend(data_collection[possible_match])
 
-        if self.service_data_uuid_set and service_info.service_data:
-            for service_data_uuid in self.service_data_uuid_set.intersection(
-                service_info.service_data
-            ):
-                for matcher in self.service_data_uuid[service_data_uuid]:
-                    if ble_device_matches(matcher, service_info):
-                        matches.append(matcher)
-
-        if self.manufacturer_id_set and service_info.manufacturer_data:
-            for manufacturer_id in self.manufacturer_id_set.intersection(
-                service_info.manufacturer_data
-            ):
-                for matcher in self.manufacturer_id[manufacturer_id]:
-                    if ble_device_matches(matcher, service_info):
-                        matches.append(matcher)
-
-        if self.service_uuid_set and service_info.service_uuids:
-            for service_uuid in self.service_uuid_set.intersection(
-                service_info.service_uuids
-            ):
-                for matcher in self.service_uuid[service_uuid]:
-                    if ble_device_matches(matcher, service_info):
-                        matches.append(matcher)
-
-        return matches
+        return list(
+            filter(
+                lambda matcher: ble_device_matches(matcher, service_info),
+                possible_matches,
+            )
+        )
 
 
 class BluetoothMatcherIndex(BluetoothMatcherIndexBase[BluetoothMatcher]):
@@ -378,42 +374,48 @@ def ble_device_matches(
     # Don't check address here since all callers already
     # check the address and we don't want to double check
     # since it would result in an unreachable reject case.
-    if matcher.get(CONNECTABLE, True) and not service_info.connectable:
-        return False
 
     advertisement_data = service_info.advertisement
-    if (
-        service_uuid := matcher.get(SERVICE_UUID)
-    ) and service_uuid not in advertisement_data.service_uuids:
-        return False
 
-    if (
-        service_data_uuid := matcher.get(SERVICE_DATA_UUID)
-    ) and service_data_uuid not in advertisement_data.service_data:
-        return False
+    connectable_check = not matcher.get(CONNECTABLE, True) or service_info.connectable
 
-    if manfacturer_id := matcher.get(MANUFACTURER_ID):
-        if manfacturer_id not in advertisement_data.manufacturer_data:
-            return False
-        if manufacturer_data_start := matcher.get(MANUFACTURER_DATA_START):
-            manufacturer_data_start_bytes = bytearray(manufacturer_data_start)
-            if not any(
-                manufacturer_data.startswith(manufacturer_data_start_bytes)
-                for manufacturer_data in advertisement_data.manufacturer_data.values()
-            ):
-                return False
+    service_uuid_check = (
+        not matcher.get(SERVICE_UUID)
+        or matcher.get(SERVICE_UUID) in advertisement_data.service_uuids
+    )
 
-    if (local_name := matcher.get(LOCAL_NAME)) and (
-        (device_name := advertisement_data.local_name or service_info.device.name)
-        is None
-        or not _memorized_fnmatch(
-            device_name,
-            local_name,
-        )
-    ):
-        return False
+    service_data_uuid_check = (
+        not matcher.get(SERVICE_DATA_UUID)
+        or matcher.get(SERVICE_DATA_UUID) in advertisement_data.service_data
+    )
 
-    return True
+    manufacturer_id = matcher.get(MANUFACTURER_ID)
+    manufacturer_data_start = matcher.get(MANUFACTURER_DATA_START)
+
+    manufacturer_id_check = (
+        not manufacturer_id or manufacturer_id in advertisement_data.manufacturer_data
+    )
+
+    manufacturer_data_start_check = not manufacturer_data_start or any(
+        manufacturer_data.startswith(bytearray(manufacturer_data_start))
+        for manufacturer_data in advertisement_data.manufacturer_data.values()
+    )
+
+    local_name = matcher.get(LOCAL_NAME)
+    device_name = advertisement_data.local_name or service_info.device.name
+
+    local_name_check = not local_name or (
+        device_name is not None and _memorized_fnmatch(device_name, local_name)
+    )
+
+    return (
+        connectable_check
+        and service_uuid_check
+        and service_data_uuid_check
+        and manufacturer_id_check
+        and manufacturer_data_start_check
+        and local_name_check
+    )
 
 
 @lru_cache(maxsize=4096, typed=True)

@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-import logging
+from typing import TYPE_CHECKING
 
-from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
+from homeassistant.core import CALLBACK_TYPE, callback
 
 from .api import (
     async_address_present,
@@ -13,7 +13,10 @@ from .api import (
     async_track_unavailable,
 )
 from .match import BluetoothCallbackMatcher
-from .models import BluetoothChange, BluetoothScanningMode, BluetoothServiceInfoBleak
+from .models import BluetoothChange, BluetoothServiceInfoBleak
+
+if TYPE_CHECKING:
+    from . import BluetoothUpdateArgs
 
 
 class BasePassiveBluetoothCoordinator(ABC):
@@ -22,26 +25,21 @@ class BasePassiveBluetoothCoordinator(ABC):
     The coordinator is responsible for tracking devices.
     """
 
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        logger: logging.Logger,
-        address: str,
-        mode: BluetoothScanningMode,
-        connectable: bool,
-    ) -> None:
+    def __init__(self, bluetoothArgs: BluetoothUpdateArgs) -> None:
         """Initialize the coordinator."""
-        self.hass = hass
-        self.logger = logger
-        self.address = address
-        self.connectable = connectable
+        self.hass = bluetoothArgs.hass
+        self.logger = bluetoothArgs.logger
+        self.address = bluetoothArgs.address
+        self.connectable = bluetoothArgs.connectable
         self._on_stop: list[CALLBACK_TYPE] = []
-        self.mode = mode
+        self.mode = bluetoothArgs.mode
         self._last_unavailable_time = 0.0
-        self._last_name = address
+        self._last_name = bluetoothArgs.address
         # Subclasses are responsible for setting _available to True
         # when the abstractmethod _async_handle_bluetooth_event is called.
-        self._available = async_address_present(hass, address, connectable)
+        self._available = async_address_present(
+            self.hass, self.address, self.connectable
+        )
 
     @callback
     def async_start(self) -> CALLBACK_TYPE:
@@ -67,7 +65,9 @@ class BasePassiveBluetoothCoordinator(ABC):
     def name(self) -> str:
         """Return last known name of the device."""
         if service_info := async_last_service_info(
-            self.hass, self.address, self.connectable
+            self.hass,
+            self.address,
+            self.connectable,
         ):
             return service_info.name
         return self._last_name

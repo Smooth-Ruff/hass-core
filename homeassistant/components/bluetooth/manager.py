@@ -229,7 +229,7 @@ class BluetoothManager:
         return self._find_adapter_by_address(address)
 
     @hass_callback
-    def _async_logging_changed(self, event: Event) -> None:
+    def _async_logging_changed(self, _: Event) -> None:
         """Handle logging change."""
         self._debug = _LOGGER.isEnabledFor(logging.DEBUG)
 
@@ -254,7 +254,7 @@ class BluetoothManager:
             self._async_trigger_matching_discovery(service_info)
 
     @hass_callback
-    def async_stop(self, event: Event) -> None:
+    def async_stop(self, _: Event) -> None:
         """Stop the Bluetooth integration at shutdown."""
         _LOGGER.debug("Stopping bluetooth manager")
         if self._cancel_unavailable_tracking:
@@ -319,7 +319,7 @@ class BluetoothManager:
         )
 
     @hass_callback
-    def _async_check_unavailable(self, now: datetime) -> None:
+    def _async_check_unavailable(self, _: datetime) -> None:
         """Watch for unavailable devices and cleanup state history."""
         monotonic_now = MONOTONIC_TIME()
         connectable_history = self._connectable_history

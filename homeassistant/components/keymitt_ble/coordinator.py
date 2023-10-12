@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 from microbot import MicroBotApiClient, parse_advertisement_data
 
 from homeassistant.components import bluetooth
+from homeassistant.components.bluetooth import BluetoothUpdateArgs
 from homeassistant.components.bluetooth.passive_update_coordinator import (
     PassiveBluetoothDataUpdateCoordinator,
 )
@@ -34,10 +35,12 @@ class MicroBotDataUpdateCoordinator(PassiveBluetoothDataUpdateCoordinator):
         self.data: dict[str, Any] = {}
         self.ble_device = ble_device
         super().__init__(
-            hass,
-            _LOGGER,
-            ble_device.address,
-            bluetooth.BluetoothScanningMode.ACTIVE,
+            bluetoothArgs=BluetoothUpdateArgs(
+                hass,
+                _LOGGER,
+                address=ble_device.address,
+                mode=bluetooth.BluetoothScanningMode.ACTIVE,
+            )
         )
 
     @callback

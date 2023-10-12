@@ -12,6 +12,7 @@ from homeassistant.components.bluetooth import (
     FALLBACK_MAXIMUM_STALE_ADVERTISEMENT_SECONDS,
     BluetoothChange,
     BluetoothScanningMode,
+    BluetoothUpdateArgs,
 )
 from homeassistant.components.bluetooth.passive_update_coordinator import (
     PassiveBluetoothCoordinatorEntity,
@@ -47,7 +48,9 @@ class MyCoordinator(PassiveBluetoothDataUpdateCoordinator):
 
     def __init__(self, hass, logger, device_id, mode) -> None:
         """Initialize the coordinator."""
-        super().__init__(hass, logger, device_id, mode)
+        super().__init__(
+            bluetoothArgs=BluetoothUpdateArgs(hass, logger, device_id, mode)
+        )
         self.data: dict[str, Any] = {}
 
     def _async_handle_bluetooth_event(

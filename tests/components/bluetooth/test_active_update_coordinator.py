@@ -14,6 +14,7 @@ from homeassistant.components.bluetooth import (
     BluetoothChange,
     BluetoothScanningMode,
     BluetoothServiceInfoBleak,
+    BluetoothUpdateArgs,
 )
 from homeassistant.components.bluetooth.active_update_coordinator import (
     _T,
@@ -76,14 +77,16 @@ class MyCoordinator(ActiveBluetoothDataUpdateCoordinator[dict[str, Any]]):
         """Initialize the coordinator."""
         self.passive_data: dict[str, Any] = {}
         super().__init__(
-            hass=hass,
-            logger=logger,
-            address=address,
-            mode=mode,
+            bluetoothArgs=BluetoothUpdateArgs(
+                hass=hass,
+                logger=logger,
+                address=address,
+                mode=mode,
+                connectable=connectable,
+            ),
             needs_poll_method=needs_poll_method,
             poll_method=poll_method,
             poll_debouncer=poll_debouncer,
-            connectable=connectable,
         )
 
     def _async_handle_bluetooth_event(

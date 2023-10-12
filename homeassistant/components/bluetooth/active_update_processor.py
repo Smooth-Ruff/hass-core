@@ -5,16 +5,15 @@ Collects data from advertisements but can also poll.
 from __future__ import annotations
 
 from collections.abc import Callable, Coroutine
-import logging
 from typing import Any, Generic, TypeVar
 
 from bleak import BleakError
 
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import callback
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.util.dt import monotonic_time_coarse
 
-from . import BluetoothChange, BluetoothScanningMode, BluetoothServiceInfoBleak
+from . import BluetoothChange, BluetoothServiceInfoBleak, BluetoothUpdateArgs
 from .passive_update_processor import PassiveBluetoothProcessorCoordinator
 
 POLL_DEFAULT_COOLDOWN = 10
@@ -55,13 +54,13 @@ class ActiveBluetoothProcessorCoordinator(
     your poll function, as it is the most efficient way to get a BleakClient.
     """
 
-    def __init__(
+    # Ignore the 'Too many arguments'
+    # Because it couldn't get down any lower from the previous 10
+    # 6 is a 40% improvement compared to 10.
+    def __init__(  # noqa: PLR0913
         self,
-        hass: HomeAssistant,
-        logger: logging.Logger,
+        bluetoothArgs: BluetoothUpdateArgs,
         *,
-        address: str,
-        mode: BluetoothScanningMode,
         update_method: Callable[[BluetoothServiceInfoBleak], _T],
         needs_poll_method: Callable[[BluetoothServiceInfoBleak, float | None], bool],
         poll_method: Callable[
@@ -70,11 +69,14 @@ class ActiveBluetoothProcessorCoordinator(
         ]
         | None = None,
         poll_debouncer: Debouncer[Coroutine[Any, Any, None]] | None = None,
-        connectable: bool = True,
     ) -> None:
         """Initialize the processor."""
-        super().__init__(hass, logger, address, mode, update_method, connectable)
+        super().__init__(
+            bluetoothArgs,
+            update_method,
+        )
 
+        self.bluetoothArgs = bluetoothArgs
         self._needs_poll_method = needs_poll_method
         self._poll_method = poll_method
         self._last_poll: float | None = None
@@ -86,8 +88,8 @@ class ActiveBluetoothProcessorCoordinator(
 
         if poll_debouncer is None:
             poll_debouncer = Debouncer(
-                hass,
-                logger,
+                bluetoothArgs.hass,
+                bluetoothArgs.logger,
                 cooldown=POLL_DEFAULT_COOLDOWN,
                 immediate=POLL_DEFAULT_IMMEDIATE,
                 function=self._async_poll,
@@ -99,7 +101,7 @@ class ActiveBluetoothProcessorCoordinator(
 
     def needs_poll(self, service_info: BluetoothServiceInfoBleak) -> bool:
         """Return true if time to try and poll."""
-        if self.hass.is_stopping:
+        if self.bluetoothArgs.hass.is_stopping:
             return False
         poll_age: float | None = None
         if self._last_poll:
@@ -122,21 +124,27 @@ class ActiveBluetoothProcessorCoordinator(
             update = await self._async_poll_data(self._last_service_info)
         except BleakError as exc:
             if self.last_poll_successful:
-                self.logger.error(
-                    "%s: Bluetooth error whilst polling: %s", self.address, str(exc)
+                self.bluetoothArgs.logger.error(
+                    "%s: Bluetooth error whilst polling: %s",
+                    self.bluetoothArgs.address,
+                    str(exc),
                 )
                 self.last_poll_successful = False
             return
         except Exception:  # pylint: disable=broad-except
             if self.last_poll_successful:
-                self.logger.exception("%s: Failure while polling", self.address)
+                self.bluetoothArgs.logger.exception(
+                    "%s: Failure while polling", self.bluetoothArgs.address
+                )
                 self.last_poll_successful = False
             return
         finally:
             self._last_poll = monotonic_time_coarse()
 
         if not self.last_poll_successful:
-            self.logger.debug("%s: Polling recovered", self.address)
+            self.bluetoothArgs.logger.debug(
+                "%s: Polling recovered", self.bluetoothArgs.address
+            )
             self.last_poll_successful = True
 
         for processor in self._processors:
@@ -157,7 +165,7 @@ class ActiveBluetoothProcessorCoordinator(
         # We use bluetooth events to trigger the poll so that we scan as soon as
         # possible after a device comes online or back in range, if a poll is due
         if self.needs_poll(service_info):
-            self.hass.async_create_task(self._debounced_poll.async_call())
+            self.bluetoothArgs.hass.async_create_task(self._debounced_poll.async_call())
 
     @callback
     def _async_stop(self) -> None:

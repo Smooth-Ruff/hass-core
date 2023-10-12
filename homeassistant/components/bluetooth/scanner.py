@@ -314,7 +314,7 @@ class HaScanner(BaseHaScanner):
         await restore_discoveries(self.scanner, self.adapter)
 
     @hass_callback
-    def _async_scanner_watchdog(self, now: datetime) -> None:
+    def _async_scanner_watchdog(self, _: datetime) -> None:
         """Check if the scanner is running."""
         if not self._async_watchdog_triggered():
             return

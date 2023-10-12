@@ -13,7 +13,7 @@ from . import _get_manager
 
 
 async def async_get_config_entry_diagnostics(
-    hass: HomeAssistant, entry: ConfigEntry
+    hass: HomeAssistant, _: ConfigEntry
 ) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
     manager = _get_manager(hass)

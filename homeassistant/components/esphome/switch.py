@@ -47,10 +47,10 @@ class EsphomeSwitch(EsphomeEntity[SwitchInfo, SwitchState], SwitchEntity):
         """Return true if the switch is on."""
         return self._state.state
 
-    async def async_turn_on(self, **kwargs: Any) -> None:
+    async def async_turn_on(self, **_kwargs: Any) -> None:
         """Turn the entity on."""
         await self._client.switch_command(self._key, True)
 
-    async def async_turn_off(self, **kwargs: Any) -> None:
+    async def async_turn_off(self, **_kwargs: Any) -> None:
         """Turn the entity off."""
         await self._client.switch_command(self._key, False)

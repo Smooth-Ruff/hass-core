@@ -112,11 +112,11 @@ class EsphomeCover(EsphomeEntity[CoverInfo, CoverState], CoverEntity):
             key=self._key, position=kwargs[ATTR_POSITION] / 100
         )
 
-    async def async_open_cover_tilt(self:EsphomeCover, **kwargs) -> None:
+    async def async_open_cover_tilt(self, **_kwargs: Any) -> None:
         """Open the cover tilt."""
         await self._client.cover_command(key=self._key, tilt=1.0)
 
-    async def async_close_cover_tilt(self:EsphomeCover, **kwargs) -> None:
+    async def async_close_cover_tilt(self, **_kwargs: Any) -> None:
         """Close the cover tilt."""
         await self._client.cover_command(key=self._key, tilt=0.0)
 

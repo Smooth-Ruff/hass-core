@@ -91,7 +91,7 @@ class EsphomeFlowHandler(ConfigFlow, domain=DOMAIN):
         """Handle a flow initialized by the user."""
         return await self._async_step_user_base(user_input=user_input)
 
-    async def async_step_reauth(self:EsphomeFlowHandler) -> FlowResult:
+    async def async_step_reauth(self, _entry_data: Mapping[str, Any]) -> FlowResult:
         """Handle a flow initialized by a reauth event."""
         entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
         assert entry is not None

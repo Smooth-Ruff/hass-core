@@ -156,6 +156,134 @@ class EsphomeLight(EsphomeEntity[LightInfo, LightState], LightEntity):
         """Return true if the light is on."""
         return self._state.state
 
+    def _apply_brightness(
+        self, data: dict[str, Any], brightness_ha: Any, color_modes: list[int]
+    ) -> bool:
+        """Apply a brightness setting if requested."""
+
+        data["brightness"] = brightness_ha / 255
+        color_modes[:] = _filter_color_modes(
+            color_modes, LightColorCapability.BRIGHTNESS
+        )
+        return False
+
+    def _apply_flash(
+        self, data: dict[str, Any], flash: str, _color_modes: list[int]
+    ) -> bool:
+        """Apply a flash setting if requested."""
+
+        data["flash_length"] = FLASH_LENGTHS[flash]
+        return False
+
+    def _apply_rgb_color(
+        self, data: dict[str, Any], rgb_ha: Any, color_modes: list[int]
+    ) -> bool:
+        """Apply an RGB color setting if requested."""
+
+        rgb = tuple(x / 255 for x in rgb_ha)
+        color_bri = max(rgb)
+        # normalize rgb
+        data["rgb"] = tuple(x / (color_bri or 1) for x in rgb)
+        data["color_brightness"] = color_bri
+        color_modes[:] = _filter_color_modes(color_modes, LightColorCapability.RGB)
+        return True
+
+    def _apply_rgbw_color(
+        self, data: dict[str, Any], rgbw_ha: Any, color_modes: list[int]
+    ) -> bool:
+        """Apply an RGBW color setting if requested."""
+
+        *rgb, w = tuple(x / 255 for x in rgbw_ha)
+        color_bri = max(rgb)
+        # normalize rgb
+        data["rgb"] = tuple(x / (color_bri or 1) for x in rgb)
+        data["white"] = w
+        data["color_brightness"] = color_bri
+        color_modes[:] = _filter_color_modes(
+            color_modes, LightColorCapability.RGB | LightColorCapability.WHITE
+        )
+        return True
+
+    def _apply_rgbww_color(
+        self, data: dict[str, Any], rgbww_ha: Any, color_modes: list[int]
+    ) -> bool:
+        """Apply an RGBWW color setting if requested."""
+
+        *rgb, cw, ww = tuple(x / 255 for x in rgbww_ha)
+        color_bri = max(rgb)
+        # normalize rgb
+        data["rgb"] = tuple(x / (color_bri or 1) for x in rgb)
+        color_modes[:] = _filter_color_modes(color_modes, LightColorCapability.RGB)
+        if _filter_color_modes(color_modes, LightColorCapability.COLD_WARM_WHITE):
+            # Device supports setting cwww values directly
+            data["cold_white"] = cw
+            data["warm_white"] = ww
+            color_modes[:] = _filter_color_modes(
+                color_modes, LightColorCapability.COLD_WARM_WHITE
+            )
+        else:
+            # need to convert cw+ww part to white+color_temp
+            white = data["white"] = max(cw, ww)
+            if white != 0:
+                static_info = self._static_info
+                min_ct = static_info.min_mireds
+                max_ct = static_info.max_mireds
+                ct_ratio = ww / (cw + ww)
+                data["color_temperature"] = min_ct + ct_ratio * (max_ct - min_ct)
+            color_modes[:] = _filter_color_modes(
+                color_modes,
+                LightColorCapability.COLOR_TEMPERATURE | LightColorCapability.WHITE,
+            )
+
+        data["color_brightness"] = color_bri
+        return True
+
+    def _apply_transition(
+        self, data: dict[str, Any], transition: Any, _color_modes: list[int]
+    ) -> bool:
+        """Apply a transition."""
+
+        data["transition_length"] = transition
+        return False
+
+    def _apply_temperature(
+        self, data: dict[str, Any], color_temp_k: Any, color_modes: list[int]
+    ) -> bool:
+        """Apply a temperature (in kelvins)."""
+
+        # Do not use kelvin_to_mired here to prevent precision loss
+        data["color_temperature"] = 1000000.0 / color_temp_k
+        if _filter_color_modes(color_modes, LightColorCapability.COLOR_TEMPERATURE):
+            color_modes[:] = _filter_color_modes(
+                color_modes, LightColorCapability.COLOR_TEMPERATURE
+            )
+        else:
+            color_modes[:] = _filter_color_modes(
+                color_modes, LightColorCapability.COLD_WARM_WHITE
+            )
+        return True
+
+    def _apply_effect(
+        self, data: dict[str, Any], effect: Any, _color_modes: list[int]
+    ) -> bool:
+        """Apply an effect."""
+        data["effect"] = effect
+        return False
+
+    def _apply_white(
+        self, data: dict[str, Any], white_ha: Any, color_modes: list[int]
+    ) -> bool:
+        # ESPHome multiplies brightness and white together for final brightness
+        # HA only sends `white` in turn_on, and reads total brightness
+        # through brightness property.
+        data["brightness"] = white_ha / 255
+        data["white"] = 1.0
+        color_modes[:] = _filter_color_modes(
+            color_modes,
+            LightColorCapability.BRIGHTNESS | LightColorCapability.WHITE,
+        )
+        return True
+
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
         data: dict[str, Any] = {"key": self._key, "state": True}
@@ -165,96 +293,26 @@ class EsphomeLight(EsphomeEntity[LightInfo, LightState], LightEntity):
 
         # rgb/brightness input is in range 0-255, but esphome uses 0-1
 
-        if (brightness_ha := kwargs.get(ATTR_BRIGHTNESS)) is not None:
-            data["brightness"] = brightness_ha / 255
-            color_modes = _filter_color_modes(
-                color_modes, LightColorCapability.BRIGHTNESS
-            )
+        # attribute_appliers: dict[
+        #   str, Callable[[dict[str, Any], Any, list[int]], bool]
+        # ] =
 
-        if (rgb_ha := kwargs.get(ATTR_RGB_COLOR)) is not None:
-            rgb = tuple(x / 255 for x in rgb_ha)
-            color_bri = max(rgb)
-            # normalize rgb
-            data["rgb"] = tuple(x / (color_bri or 1) for x in rgb)
-            data["color_brightness"] = color_bri
-            color_modes = _filter_color_modes(color_modes, LightColorCapability.RGB)
-            try_keep_current_mode = False
-
-        if (rgbw_ha := kwargs.get(ATTR_RGBW_COLOR)) is not None:
-            *rgb, w = tuple(x / 255 for x in rgbw_ha)  # type: ignore[assignment]
-            color_bri = max(rgb)
-            # normalize rgb
-            data["rgb"] = tuple(x / (color_bri or 1) for x in rgb)
-            data["white"] = w
-            data["color_brightness"] = color_bri
-            color_modes = _filter_color_modes(
-                color_modes, LightColorCapability.RGB | LightColorCapability.WHITE
-            )
-            try_keep_current_mode = False
-
-        if (rgbww_ha := kwargs.get(ATTR_RGBWW_COLOR)) is not None:
-            *rgb, cw, ww = tuple(x / 255 for x in rgbww_ha)  # type: ignore[assignment]
-            color_bri = max(rgb)
-            # normalize rgb
-            data["rgb"] = tuple(x / (color_bri or 1) for x in rgb)
-            color_modes = _filter_color_modes(color_modes, LightColorCapability.RGB)
-            if _filter_color_modes(color_modes, LightColorCapability.COLD_WARM_WHITE):
-                # Device supports setting cwww values directly
-                data["cold_white"] = cw
-                data["warm_white"] = ww
-                color_modes = _filter_color_modes(
-                    color_modes, LightColorCapability.COLD_WARM_WHITE
-                )
-            else:
-                # need to convert cw+ww part to white+color_temp
-                white = data["white"] = max(cw, ww)
-                if white != 0:
-                    static_info = self._static_info
-                    min_ct = static_info.min_mireds
-                    max_ct = static_info.max_mireds
-                    ct_ratio = ww / (cw + ww)
-                    data["color_temperature"] = min_ct + ct_ratio * (max_ct - min_ct)
-                color_modes = _filter_color_modes(
-                    color_modes,
-                    LightColorCapability.COLOR_TEMPERATURE | LightColorCapability.WHITE,
-                )
-            try_keep_current_mode = False
-
-            data["color_brightness"] = color_bri
-
-        if (flash := kwargs.get(ATTR_FLASH)) is not None:
-            data["flash_length"] = FLASH_LENGTHS[flash]
-
-        if (transition := kwargs.get(ATTR_TRANSITION)) is not None:
-            data["transition_length"] = transition
-
-        if (color_temp_k := kwargs.get(ATTR_COLOR_TEMP_KELVIN)) is not None:
-            # Do not use kelvin_to_mired here to prevent precision loss
-            data["color_temperature"] = 1000000.0 / color_temp_k
-            if _filter_color_modes(color_modes, LightColorCapability.COLOR_TEMPERATURE):
-                color_modes = _filter_color_modes(
-                    color_modes, LightColorCapability.COLOR_TEMPERATURE
-                )
-            else:
-                color_modes = _filter_color_modes(
-                    color_modes, LightColorCapability.COLD_WARM_WHITE
-                )
-            try_keep_current_mode = False
-
-        if (effect := kwargs.get(ATTR_EFFECT)) is not None:
-            data["effect"] = effect
-
-        if (white_ha := kwargs.get(ATTR_WHITE)) is not None:
-            # ESPHome multiplies brightness and white together for final brightness
-            # HA only sends `white` in turn_on, and reads total brightness
-            # through brightness property.
-            data["brightness"] = white_ha / 255
-            data["white"] = 1.0
-            color_modes = _filter_color_modes(
-                color_modes,
-                LightColorCapability.BRIGHTNESS | LightColorCapability.WHITE,
-            )
-            try_keep_current_mode = False
+        for key, applier in {
+            ATTR_BRIGHTNESS: self._apply_brightness,
+            ATTR_FLASH: self._apply_flash,
+            ATTR_RGB_COLOR: self._apply_rgb_color,
+            ATTR_RGBW_COLOR: self._apply_rgbw_color,
+            ATTR_RGBWW_COLOR: self._apply_rgbww_color,
+            ATTR_TRANSITION: self._apply_transition,
+            ATTR_COLOR_TEMP_KELVIN: self._apply_temperature,
+            ATTR_EFFECT: self._apply_effect,
+            ATTR_WHITE: self._apply_white,
+        }.items():
+            if (value := kwargs.get(key)) is None:
+                continue
+            discard_current_mode = applier(data, value, color_modes)
+            if discard_current_mode:
+                try_keep_current_mode = False
 
         if self._supports_color_mode and color_modes:
             if (

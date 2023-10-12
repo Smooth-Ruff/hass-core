@@ -420,7 +420,7 @@ class ESPHomeClient(BaseBleakClient):
 
     @verify_connected
     @api_error_as_bleak_error
-    async def pair(self, *args: Any, **kwargs: Any) -> bool:
+    async def pair(self, *_args: Any, **_kwargs: Any) -> bool:
         """Attempt to pair."""
         if not self._feature_flags & BluetoothProxyFeature.PAIRING:
             raise NotImplementedError(
@@ -468,7 +468,7 @@ class ESPHomeClient(BaseBleakClient):
 
     @verify_connected
     async def _get_services(
-        self, dangerous_use_bleak_cache: bool = False, **kwargs: Any
+        self, dangerous_use_bleak_cache: bool = False, **_kwargs: Any
     ) -> BleakGATTServiceCollection:
         """Get all services registered for this GATT server.
 
@@ -587,7 +587,7 @@ class ESPHomeClient(BaseBleakClient):
     async def read_gatt_char(
         self,
         char_specifier: BleakGATTCharacteristic | int | str | uuid.UUID,
-        **kwargs: Any,
+        **_kwargs: Any,
     ) -> bytearray:
         """Perform read operation on the specified GATT characteristic.
 
@@ -608,7 +608,7 @@ class ESPHomeClient(BaseBleakClient):
 
     @verify_connected
     @api_error_as_bleak_error
-    async def read_gatt_descriptor(self, handle: int, **kwargs: Any) -> bytearray:
+    async def read_gatt_descriptor(self, handle: int, **_kwargs: Any) -> bytearray:
         """Perform read operation on the specified GATT descriptor.
 
         Args:
@@ -665,7 +665,7 @@ class ESPHomeClient(BaseBleakClient):
         self,
         characteristic: BleakGATTCharacteristic,
         callback: NotifyCallback,
-        **kwargs: Any,
+        **_kwargs: Any,
     ) -> None:
         """Activate notifications/indications on a characteristic.
 
@@ -708,7 +708,7 @@ class ESPHomeClient(BaseBleakClient):
         ] = await self._client.bluetooth_gatt_start_notify(
             self._address_as_int,
             ble_handle,
-            lambda handle, data: callback(data),
+            lambda _handle, data: callback(data),
         )
 
         if not self._feature_flags & BluetoothProxyFeature.REMOTE_CACHING:

@@ -40,6 +40,8 @@ _LOGGER = logging.getLogger(__name__)
 UDP_PORT = 0  # Set to 0 to let the OS pick a free random port
 UDP_MAX_PACKET_SIZE = 1024
 
+_VOICE_ASSISTANT_MINIMUM_VERSION = 2
+
 _VOICE_ASSISTANT_EVENT_TYPES: EsphomeEnumMapper[
     VoiceAssistantEventType, PipelineEventType
 ] = EsphomeEnumMapper(
@@ -185,7 +187,10 @@ class VoiceAssistantUDPServer(asyncio.DatagramProtocol):
             url = async_process_play_media_url(self.hass, path)
             data_to_send = {"url": url}
 
-            if self.device_info.voice_assistant_version >= 2:
+            if (
+                self.device_info.voice_assistant_version
+                >= _VOICE_ASSISTANT_MINIMUM_VERSION
+            ):
                 media_id = event.data["tts_output"]["media_id"]
                 self.hass.async_create_background_task(
                     self._send_tts(media_id), "esphome_voice_assistant_tts"
@@ -226,7 +231,10 @@ class VoiceAssistantUDPServer(asyncio.DatagramProtocol):
             audio_settings = VoiceAssistantAudioSettings()
 
         tts_audio_output = (
-            "raw" if self.device_info.voice_assistant_version >= 2 else "mp3"
+            "raw"
+            if self.device_info.voice_assistant_version
+            >= _VOICE_ASSISTANT_MINIMUM_VERSION
+            else "mp3"
         )
 
         _LOGGER.debug("Starting pipeline")

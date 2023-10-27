@@ -43,3 +43,19 @@ package Integration {
  }
 
 }
+
+package Swedavia as SWED{
+}
+
+SWEDAPI--> SWED
+SWED--> SWEDAPI
+
+FUNCTIONS --> SWEDAPI
+FUNCTIONS <-- SWEDAPI
+
+CONF --> FUNCTIONS
+
+Setup --> CONF
+CONST <-- Setup
+
+@enduml

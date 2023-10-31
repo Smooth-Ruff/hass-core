@@ -1,0 +1,68 @@
+@startuml
+
+package Integration {
+
+ object Setup{
+}
+
+ package Functions as FUNCTIONS {
+  package FetchSpecificFlight{}
+  package FetchAllDepartures{}
+  package FetchAllArrivalsAtDestination{}
+  package FetchAvailableParkingLots{}
+  package FetchRestaurants{}
+  }
+
+
+ package Constants as CONST {
+   object Defaults {
+     Default language
+     Default refresh interval
+   }
+ }
+
+
+ package UserConf as CONF{
+   object Configuration{
+     Home Airport
+     Swedavia Token
+     Language
+     Refresh Interval
+   }
+ }
+
+ package SwedaviaAPI as SWEDAPI{
+
+   package FlightInformation {
+    class FlightInfo {
+       arrival airport
+       departure airport
+       flight id
+       ...
+    }
+   }
+   package AirportInformation {
+    class AirportInfo {
+      parking lots
+      restaurants
+      
+  }
+ }
+
+}
+
+package Swedavia as SWED{
+}
+
+SWEDAPI--> SWED
+SWED--> SWEDAPI
+
+FUNCTIONS --> SWEDAPI
+FUNCTIONS <-- SWEDAPI
+
+CONF --> FUNCTIONS
+
+Setup --> CONF
+CONST <-- Setup
+
+@enduml

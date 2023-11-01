@@ -9,6 +9,8 @@ package Integration {
   package FetchSpecificFlight{}
   package FetchAllDepartures{}
   package FetchAllArrivalsAtDestination{}
+ package FetchAllWaitingTimeAtAirport{}
+ package FetchWaitingTimeForSpecificFLightAtAirport{}
   }
 
 
@@ -39,8 +41,19 @@ package Integration {
        ...
     }
    }
+ package WaitTimeInformation {
+    class WaitTimeInfo {
+       departure airport
+       flight id
+       ...
+    }
+   }
 
  }
+ 
+
+
+ 
 
 }
 

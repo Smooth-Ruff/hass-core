@@ -11,6 +11,8 @@ package Integration {
   package FetchAllArrivalsAtDestination{}
  package FetchAllWaitingTimeAtAirport{}
  package FetchWaitingTimeForSpecificFLightAtAirport{}
+  package FetchAvailableParkingLots{}
+  package FetchRestaurants{}
   }
 
 

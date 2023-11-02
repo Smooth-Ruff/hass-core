@@ -48,6 +48,13 @@ package Integration {
        ...
     }
    }
+  package AirportInformation {
+    class AirportInfo {
+      parking lots
+      restaurants
+      
+  }
+ }
 
  }
  

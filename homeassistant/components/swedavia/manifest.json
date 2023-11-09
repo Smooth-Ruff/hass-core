@@ -1,0 +1,15 @@
+{
+  "domain": "swedavia",
+  "name": "Swedavia",
+  "codeowners": [
+    "@latiif",
+    "@oswalchlm"
+  ],
+  "config_flow": true,
+  "documentation": "https://www.home-assistant.io/integrations/swedavia",
+  "iot_class": "cloud_polling",
+  "loggers": [
+    "swedavia"
+  ],
+  "requirements": []
+}

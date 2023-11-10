@@ -118,10 +118,61 @@ class Flight:
 
 @dataclass
 class WaitTime:
-    # TODO Fill the class
-    pass
+    id_: int
+    queue_name: str
+    current_time: date
+    current_projected_wait_time: int
+    is_fast_track: bool
+    terminal: str
+    latitude: float
+    longitude: float
+    overflow: bool
 
+    def __init__(self,
+                 id_: str,
+                 queue_name: str,
+                 current_time: date,
+                 current_projected_wait_time: int,
+                 is_fast_track: bool,
+                 terminal: str,
+                 latitude: float,
+                 longitude: float,
+                 overflow: bool):
+        self.id_ = id_
+        self.queue_name = queue_name
+        self.current_time = current_time
+        self.current_projected_wait_time = current_projected_wait_time
+        self.is_fast_track = is_fast_track
+        self.terminal = terminal
+        self.latitude = latitude
+        self.longitude = longitude
+        self.overflow = overflow
 
+    @staticmethod
+    def from_dict(d: dict) -> 'WaitTime':
+        return WaitTime(
+                d.get("id"),
+                d.get("queueName"),
+                d.get("currentTime"),
+                d.get("currentProjectedWaitTime"),
+                d.get("isFastTrack"),
+                d.get("terminal"),
+                d.get("latitude"),
+                d.get("longitude"),
+                d.get("overflow"))
+    
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id_,
+            "queueName": self.queue_name,
+            "currentTime": self.current_time,
+            "currentProjectedWaitTime": self.current_projected_wait_time,
+            "isFastTrack": self.is_fast_track,
+            "terminal": self.terminal,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "overflow": self.overflow
+        }
 @dataclass
 class FlightAndWaitTime:
     flight_info: Flight

@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from datetime import date
-from typing import Optional
 from typing import Any, List, Optional, TypeVar, Callable, Type, cast
 from datetime import datetime
 import dateutil.parser

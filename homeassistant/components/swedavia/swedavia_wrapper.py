@@ -2,7 +2,7 @@ import aiohttp
 
 
 from homeassistant.core import HomeAssistant
-from .flight_data import Flight, WaitTime
+from .flight_data import FlightInfo, WaitTime
 
 
 class SwedaviaWrapper:
@@ -30,8 +30,27 @@ class SwedaviaWrapper:
 
     async def async_get_flight_info(
         self, airport: str, flight_number: str, date: str
-    ) -> Flight:
-        pass
+    ) -> FlightInfo:
+        base_url = "https://api.swedavia.se/flightinfo/v2/query"
+
+        filter_params = f"airport eq '{airport}' and scheduled eq '{scheduled}' and flightType eq '{flight_type}' and flightId eq '{flight_id}'"
+        url = f"{base_url}?filter={filter_params}"
+    
+        headers = {
+            "Accept": "application/json",
+            "Cache-Control": "no-cache",
+            "Ocp-Apim-Subscription-Key": self.flight_info_api_key = flight_info_api_key,
+        }
+    
+        async with client_session.get(url, headers=headers) as response:
+            if response.status == 200:
+                data = await response.json()
+                return FlightInfo.from_dict(data)
+    
+            else:
+                raise Exception(
+                    f"Failed to fetch flight info. Status code: {response.status}"
+                )
 
     async def async_get_wait_time(
         self, airport: str, flight_number: str, date: str

@@ -3,13 +3,21 @@ from __future__ import annotations
 
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_API_KEY
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import CONF_FILTER_PRODUCT, CONF_FROM, CONF_TO, DOMAIN, PLATFORMS
+from .const import (
+    DOMAIN,
+    PLATFORMS,
+    CONF_FLIGHTINFO_APIKEY,
+    CONF_HOMEAIRPORT,
+    CONF_WAIT_TIME_APIKEY,
+    CONF_FLIGHTNUMBER,
+    CONF_DATE,
+)
+
 from .coordinator import SwedaviaDataUpdateCoordinator
 from .swedavia_wrapper import (
     SwedaviaWrapper,
@@ -26,23 +34,35 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     http_session = async_get_clientsession(hass)
     swedavia_api = SwedaviaWrapper(
         client_session=http_session,
-        flight_info_api_key=entry.data[CONF_API_KEY],
-        wait_time_api_key=entry.data[CONF_API_KEY],
+        flight_info_api_key=entry.data[CONF_FLIGHTINFO_APIKEY],
+        wait_time_api_key=entry.data[CONF_WAIT_TIME_APIKEY],
     )
 
     try:
-        to_station = await swedavia_api.async_get_train_station(entry.data[CONF_TO])
-        from_station = await swedavia_api.async_get_train_station(entry.data[CONF_FROM])
-    except InvalidAuthentication as error:
+        await swedavia_api.async_get_flight_info(
+            airport=entry.data[CONF_HOMEAIRPORT],
+            flight_number=entry.data[CONF_FLIGHTNUMBER],
+            date=entry.data[CONF_DATE],
+        )
+        await swedavia_api.async_get_wait_time(
+            airport=entry.data[CONF_HOMEAIRPORT],
+            flight_number=entry.data[CONF_FLIGHTNUMBER],
+            date=entry.data[CONF_DATE],
+        )
+    except (InvalidFlightInfoKey, InvalidWaitTimeKey) as error:
         raise ConfigEntryAuthFailed from error
-    except (NoTrainStationFound, MultipleTrainStationsFound) as error:
+    except (InvalidtFlightNumber, InvalidAirport) as error:
         raise ConfigEntryNotReady(
-            f"Problem when trying station {entry.data[CONF_FROM]} to"
-            f" {entry.data[CONF_TO]}. Error: {error} "
+            f"Problem when looking up flight {entry.data[CONF_FLIGHTNUMBER]} from"
+            f" {entry.data[CONF_HOMEAIRPORT]}. Error: {error} "
         ) from error
 
     coordinator = SwedaviaDataUpdateCoordinator(
-        hass, entry, to_station, from_station, entry.options.get(CONF_FILTER_PRODUCT)
+        hass,
+        entry,
+        airport=entry.data[CONF_HOMEAIRPORT],
+        flight_number=entry.data[CONF_FLIGHTNUMBER],
+        date=entry.data[CONF_DATE],
     )
     await coordinator.async_config_entry_first_refresh()
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
@@ -52,7 +72,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     for entity in entries:
         if not entity.unique_id.startswith(entry.entry_id):
             entity_reg.async_update_entity(
-                entity.entity_id, new_unique_id=f"{entry.entry_id}-departure_time"
+                entity.entity_id,
+                new_unique_id=f"{entry.entry_id}-flight-info-and-wait-times",
             )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

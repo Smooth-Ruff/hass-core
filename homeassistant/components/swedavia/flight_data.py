@@ -52,7 +52,7 @@ class AirlineOperator:
         self.name = name
 
     @staticmethod
-    def from_dict(obj: Any) -> 'AirlineOperator':
+    def from_dict(obj: Any) -> "AirlineOperator":
         assert isinstance(obj, dict)
         iata = from_str(obj.get("iata"))
         icao = from_str(obj.get("icao"))
@@ -74,7 +74,7 @@ class Time:
         self.scheduled_utc = scheduled_utc
 
     @staticmethod
-    def from_dict(obj: Any) -> 'Time':
+    def from_dict(obj: Any) -> "Time":
         assert isinstance(obj, dict)
         scheduled_utc = from_datetime(obj.get("scheduledUtc"))
         return Time(scheduled_utc)
@@ -88,11 +88,13 @@ class Time:
 class Baggage:
     pass
 
-    def __init__(self, ) -> None:
+    def __init__(
+        self,
+    ) -> None:
         pass
 
     @staticmethod
-    def from_dict(obj: Any) -> 'Baggage':
+    def from_dict(obj: Any) -> "Baggage":
         assert isinstance(obj, dict)
         return Baggage()
 
@@ -110,7 +112,16 @@ class FlightLegIdentifier:
     departure_airport_icao: str
     arrival_airport_icao: str
 
-    def __init__(self, callsign: str, flight_id: str, flight_departure_date_utc: datetime, departure_airport_iata: str, arrival_airport_iata: str, departure_airport_icao: str, arrival_airport_icao: str) -> None:
+    def __init__(
+        self,
+        callsign: str,
+        flight_id: str,
+        flight_departure_date_utc: datetime,
+        departure_airport_iata: str,
+        arrival_airport_iata: str,
+        departure_airport_icao: str,
+        arrival_airport_icao: str,
+    ) -> None:
         self.callsign = callsign
         self.flight_id = flight_id
         self.flight_departure_date_utc = flight_departure_date_utc
@@ -120,7 +131,7 @@ class FlightLegIdentifier:
         self.arrival_airport_icao = arrival_airport_icao
 
     @staticmethod
-    def from_dict(obj: Any) -> 'FlightLegIdentifier':
+    def from_dict(obj: Any) -> "FlightLegIdentifier":
         assert isinstance(obj, dict)
         callsign = from_str(obj.get("callsign"))
         flight_id = from_str(obj.get("flightId"))
@@ -129,7 +140,15 @@ class FlightLegIdentifier:
         arrival_airport_iata = from_str(obj.get("arrivalAirportIata"))
         departure_airport_icao = from_str(obj.get("departureAirportIcao"))
         arrival_airport_icao = from_str(obj.get("arrivalAirportIcao"))
-        return FlightLegIdentifier(callsign, flight_id, flight_departure_date_utc, departure_airport_iata, arrival_airport_iata, departure_airport_icao, arrival_airport_icao)
+        return FlightLegIdentifier(
+            callsign,
+            flight_id,
+            flight_departure_date_utc,
+            departure_airport_iata,
+            arrival_airport_iata,
+            departure_airport_icao,
+            arrival_airport_icao,
+        )
 
     def to_dict(self) -> dict:
         result: dict = {}
@@ -149,20 +168,31 @@ class LocationAndStatus:
     flight_leg_status_swedish: str
     flight_leg_status_english: str
 
-    def __init__(self, terminal: str, flight_leg_status: str, flight_leg_status_swedish: str, flight_leg_status_english: str) -> None:
+    def __init__(
+        self,
+        terminal: str,
+        flight_leg_status: str,
+        flight_leg_status_swedish: str,
+        flight_leg_status_english: str,
+    ) -> None:
         self.terminal = terminal
         self.flight_leg_status = flight_leg_status
         self.flight_leg_status_swedish = flight_leg_status_swedish
         self.flight_leg_status_english = flight_leg_status_english
 
     @staticmethod
-    def from_dict(obj: Any) -> 'LocationAndStatus':
+    def from_dict(obj: Any) -> "LocationAndStatus":
         assert isinstance(obj, dict)
         terminal = from_str(obj.get("terminal"))
         flight_leg_status = from_str(obj.get("flightLegStatus"))
         flight_leg_status_swedish = from_str(obj.get("flightLegStatusSwedish"))
         flight_leg_status_english = from_str(obj.get("flightLegStatusEnglish"))
-        return LocationAndStatus(terminal, flight_leg_status, flight_leg_status_swedish, flight_leg_status_english)
+        return LocationAndStatus(
+            terminal,
+            flight_leg_status,
+            flight_leg_status_swedish,
+            flight_leg_status_english,
+        )
 
     def to_dict(self) -> dict:
         result: dict = {}
@@ -188,7 +218,22 @@ class Arrival:
     via_destinations: List[Any]
     di_indicator: str
 
-    def __init__(self, flight_id: str, departure_airport_swedish: str, departure_airport_english: str, airline_operator: AirlineOperator, arrival_time: Time, location_and_status: LocationAndStatus, baggage: Baggage, code_share_data: List[Any], flight_leg_identifier: FlightLegIdentifier, remarks_english: List[Any], remarks_swedish: List[Any], via_destinations: List[Any], di_indicator: str) -> None:
+    def __init__(
+        self,
+        flight_id: str,
+        departure_airport_swedish: str,
+        departure_airport_english: str,
+        airline_operator: AirlineOperator,
+        arrival_time: Time,
+        location_and_status: LocationAndStatus,
+        baggage: Baggage,
+        code_share_data: List[Any],
+        flight_leg_identifier: FlightLegIdentifier,
+        remarks_english: List[Any],
+        remarks_swedish: List[Any],
+        via_destinations: List[Any],
+        di_indicator: str,
+    ) -> None:
         self.flight_id = flight_id
         self.departure_airport_swedish = departure_airport_swedish
         self.departure_airport_english = departure_airport_english
@@ -204,7 +249,7 @@ class Arrival:
         self.di_indicator = di_indicator
 
     @staticmethod
-    def from_dict(obj: Any) -> 'Arrival':
+    def from_dict(obj: Any) -> "Arrival":
         assert isinstance(obj, dict)
         flight_id = from_str(obj.get("flightId"))
         departure_airport_swedish = from_str(obj.get("departureAirportSwedish"))
@@ -214,12 +259,28 @@ class Arrival:
         location_and_status = LocationAndStatus.from_dict(obj.get("locationAndStatus"))
         baggage = Baggage.from_dict(obj.get("baggage"))
         code_share_data = from_list(lambda x: x, obj.get("codeShareData"))
-        flight_leg_identifier = FlightLegIdentifier.from_dict(obj.get("flightLegIdentifier"))
+        flight_leg_identifier = FlightLegIdentifier.from_dict(
+            obj.get("flightLegIdentifier")
+        )
         remarks_english = from_list(lambda x: x, obj.get("remarksEnglish"))
         remarks_swedish = from_list(lambda x: x, obj.get("remarksSwedish"))
         via_destinations = from_list(lambda x: x, obj.get("viaDestinations"))
         di_indicator = from_str(obj.get("diIndicator"))
-        return Arrival(flight_id, departure_airport_swedish, departure_airport_english, airline_operator, arrival_time, location_and_status, baggage, code_share_data, flight_leg_identifier, remarks_english, remarks_swedish, via_destinations, di_indicator)
+        return Arrival(
+            flight_id,
+            departure_airport_swedish,
+            departure_airport_english,
+            airline_operator,
+            arrival_time,
+            location_and_status,
+            baggage,
+            code_share_data,
+            flight_leg_identifier,
+            remarks_english,
+            remarks_swedish,
+            via_destinations,
+            di_indicator,
+        )
 
     def to_dict(self) -> dict:
         result: dict = {}
@@ -228,10 +289,14 @@ class Arrival:
         result["departureAirportEnglish"] = from_str(self.departure_airport_english)
         result["airlineOperator"] = to_class(AirlineOperator, self.airline_operator)
         result["arrivalTime"] = to_class(Time, self.arrival_time)
-        result["locationAndStatus"] = to_class(LocationAndStatus, self.location_and_status)
+        result["locationAndStatus"] = to_class(
+            LocationAndStatus, self.location_and_status
+        )
         result["baggage"] = to_class(Baggage, self.baggage)
         result["codeShareData"] = from_list(lambda x: x, self.code_share_data)
-        result["flightLegIdentifier"] = to_class(FlightLegIdentifier, self.flight_leg_identifier)
+        result["flightLegIdentifier"] = to_class(
+            FlightLegIdentifier, self.flight_leg_identifier
+        )
         result["remarksEnglish"] = from_list(lambda x: x, self.remarks_english)
         result["remarksSwedish"] = from_list(lambda x: x, self.remarks_swedish)
         result["viaDestinations"] = from_list(lambda x: x, self.via_destinations)
@@ -254,7 +319,22 @@ class Departure:
     remarks_swedish: List[Any]
     di_indicator: str
 
-    def __init__(self, flight_id: str, arrival_airport_swedish: str, arrival_airport_english: str, airline_operator: AirlineOperator, departure_time: Time, location_and_status: LocationAndStatus, check_in: Baggage, code_share_data: List[Any], flight_leg_identifier: FlightLegIdentifier, via_destinations: List[Any], remarks_english: List[Any], remarks_swedish: List[Any], di_indicator: str) -> None:
+    def __init__(
+        self,
+        flight_id: str,
+        arrival_airport_swedish: str,
+        arrival_airport_english: str,
+        airline_operator: AirlineOperator,
+        departure_time: Time,
+        location_and_status: LocationAndStatus,
+        check_in: Baggage,
+        code_share_data: List[Any],
+        flight_leg_identifier: FlightLegIdentifier,
+        via_destinations: List[Any],
+        remarks_english: List[Any],
+        remarks_swedish: List[Any],
+        di_indicator: str,
+    ) -> None:
         self.flight_id = flight_id
         self.arrival_airport_swedish = arrival_airport_swedish
         self.arrival_airport_english = arrival_airport_english
@@ -270,7 +350,7 @@ class Departure:
         self.di_indicator = di_indicator
 
     @staticmethod
-    def from_dict(obj: Any) -> 'Departure':
+    def from_dict(obj: Any) -> "Departure":
         assert isinstance(obj, dict)
         flight_id = from_str(obj.get("flightId"))
         arrival_airport_swedish = from_str(obj.get("arrivalAirportSwedish"))
@@ -280,12 +360,28 @@ class Departure:
         location_and_status = LocationAndStatus.from_dict(obj.get("locationAndStatus"))
         check_in = Baggage.from_dict(obj.get("checkIn"))
         code_share_data = from_list(lambda x: x, obj.get("codeShareData"))
-        flight_leg_identifier = FlightLegIdentifier.from_dict(obj.get("flightLegIdentifier"))
+        flight_leg_identifier = FlightLegIdentifier.from_dict(
+            obj.get("flightLegIdentifier")
+        )
         via_destinations = from_list(lambda x: x, obj.get("viaDestinations"))
         remarks_english = from_list(lambda x: x, obj.get("remarksEnglish"))
         remarks_swedish = from_list(lambda x: x, obj.get("remarksSwedish"))
         di_indicator = from_str(obj.get("diIndicator"))
-        return Departure(flight_id, arrival_airport_swedish, arrival_airport_english, airline_operator, departure_time, location_and_status, check_in, code_share_data, flight_leg_identifier, via_destinations, remarks_english, remarks_swedish, di_indicator)
+        return Departure(
+            flight_id,
+            arrival_airport_swedish,
+            arrival_airport_english,
+            airline_operator,
+            departure_time,
+            location_and_status,
+            check_in,
+            code_share_data,
+            flight_leg_identifier,
+            via_destinations,
+            remarks_english,
+            remarks_swedish,
+            di_indicator,
+        )
 
     def to_dict(self) -> dict:
         result: dict = {}
@@ -294,10 +390,14 @@ class Departure:
         result["arrivalAirportEnglish"] = from_str(self.arrival_airport_english)
         result["airlineOperator"] = to_class(AirlineOperator, self.airline_operator)
         result["departureTime"] = to_class(Time, self.departure_time)
-        result["locationAndStatus"] = to_class(LocationAndStatus, self.location_and_status)
+        result["locationAndStatus"] = to_class(
+            LocationAndStatus, self.location_and_status
+        )
         result["checkIn"] = to_class(Baggage, self.check_in)
         result["codeShareData"] = from_list(lambda x: x, self.code_share_data)
-        result["flightLegIdentifier"] = to_class(FlightLegIdentifier, self.flight_leg_identifier)
+        result["flightLegIdentifier"] = to_class(
+            FlightLegIdentifier, self.flight_leg_identifier
+        )
         result["viaDestinations"] = from_list(lambda x: x, self.via_destinations)
         result["remarksEnglish"] = from_list(lambda x: x, self.remarks_english)
         result["remarksSwedish"] = from_list(lambda x: x, self.remarks_swedish)
@@ -309,12 +409,14 @@ class Flight:
     departure: Optional[Departure]
     arrival: Optional[Arrival]
 
-    def __init__(self, departure: Optional[Departure], arrival: Optional[Arrival]) -> None:
+    def __init__(
+        self, departure: Optional[Departure], arrival: Optional[Arrival]
+    ) -> None:
         self.departure = departure
         self.arrival = arrival
 
     @staticmethod
-    def from_dict(obj: Any) -> 'Flight':
+    def from_dict(obj: Any) -> "Flight":
         assert isinstance(obj, dict)
         departure = from_union([Departure.from_dict, from_none], obj.get("departure"))
         arrival = from_union([Arrival.from_dict, from_none], obj.get("arrival"))
@@ -323,9 +425,13 @@ class Flight:
     def to_dict(self) -> dict:
         result: dict = {}
         if self.departure is not None:
-            result["departure"] = from_union([lambda x: to_class(Departure, x), from_none], self.departure)
+            result["departure"] = from_union(
+                [lambda x: to_class(Departure, x), from_none], self.departure
+            )
         if self.arrival is not None:
-            result["arrival"] = from_union([lambda x: to_class(Arrival, x), from_none], self.arrival)
+            result["arrival"] = from_union(
+                [lambda x: to_class(Arrival, x), from_none], self.arrival
+            )
         return result
 
 
@@ -338,7 +444,7 @@ class FlightInfo:
         self.continuationtoken = continuationtoken
 
     @staticmethod
-    def from_dict(obj: Any) -> 'FlightInfo':
+    def from_dict(obj: Any) -> "FlightInfo":
         assert isinstance(obj, dict)
         flights = from_list(Flight.from_dict, obj.get("flights"))
         continuationtoken = from_str(obj.get("continuationtoken"))
@@ -371,16 +477,18 @@ class WaitTime:
     longitude: float
     overflow: bool
 
-    def __init__(self,
-                 id_: str,
-                 queue_name: str,
-                 current_time: date,
-                 current_projected_wait_time: int,
-                 is_fast_track: bool,
-                 terminal: str,
-                 latitude: float,
-                 longitude: float,
-                 overflow: bool):
+    def __init__(
+        self,
+        id_: str,
+        queue_name: str,
+        current_time: date,
+        current_projected_wait_time: int,
+        is_fast_track: bool,
+        terminal: str,
+        latitude: float,
+        longitude: float,
+        overflow: bool,
+    ) -> None:
         self.id_ = id_
         self.queue_name = queue_name
         self.current_time = current_time
@@ -392,18 +500,19 @@ class WaitTime:
         self.overflow = overflow
 
     @staticmethod
-    def from_dict(d: dict) -> 'WaitTime':
+    def from_dict(d: dict) -> "WaitTime":
         return WaitTime(
-                d.get("id"),
-                d.get("queueName"),
-                d.get("currentTime"),
-                d.get("currentProjectedWaitTime"),
-                d.get("isFastTrack"),
-                d.get("terminal"),
-                d.get("latitude"),
-                d.get("longitude"),
-                d.get("overflow"))
-    
+            d.get("id"),
+            d.get("queueName"),
+            d.get("currentTime"),
+            d.get("currentProjectedWaitTime"),
+            d.get("isFastTrack"),
+            d.get("terminal"),
+            d.get("latitude"),
+            d.get("longitude"),
+            d.get("overflow"),
+        )
+
     def to_dict(self) -> dict:
         return {
             "id": self.id_,
@@ -414,8 +523,10 @@ class WaitTime:
             "terminal": self.terminal,
             "latitude": self.latitude,
             "longitude": self.longitude,
-            "overflow": self.overflow
+            "overflow": self.overflow,
         }
+
+
 @dataclass
 class FlightAndWaitTime:
     flight_info: Flight

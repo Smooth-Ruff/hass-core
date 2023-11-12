@@ -3,41 +3,36 @@ from __future__ import annotations
 
 from datetime import timedelta
 import logging
-import aiohttp
 
 
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .coordinator import SwedaviaDataUpdateCoordinator
-from .swedavia_wrapper import SwedaviaWrapper
 import voluptuous as vol
 
 from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorEntity
-from homeassistant.const import CONF_DELAY, CONF_NAME
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import Throttle
-from homeassistant.util.dt import now
-from .flight_data import FlightAndWaitTime, Flight, WaitTime
+from .flight_data import FlightAndWaitTime
+from homeassistant.config_entries import ConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
+
+
+from .const import (
+    CONF_FLIGHTINFO_APIKEY,
+    CONF_FLIGHTNUMBER,
+    CONF_HOMEAIRPORT,
+    CONF_WAIT_TIME_APIKEY,
+    CONF_DATE,
+)
 
 ATTR_ACCESSIBILITY = "accessibility"
 ATTR_DIRECTION = "direction"
 ATTR_LINE = "line"
 ATTR_TRACK = "track"
 
-CONF_DEPARTURES = "departures"
-CONF_FROM = "from"
-CONF_HEADING = "heading"
-CONF_LINES = "lines"
-CONF_KEY = "key"
-CONF_SECRET = "secret"
-
-CONF_FLIGHT_NUMBER = "flight_number"
-CONF_AIRPORT = "home_airport"
-CONF_DATE = "date"
 
 DOMAIN = "swedavia"
 
@@ -48,19 +43,11 @@ MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=120)
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
-        vol.Required(CONF_KEY): cv.string,
-        vol.Required(CONF_SECRET): cv.string,
-        vol.Required(CONF_DEPARTURES): [
-            {
-                vol.Required(CONF_FROM): cv.string,
-                vol.Optional(CONF_DELAY, default=DEFAULT_DELAY): cv.positive_int,
-                vol.Optional(CONF_HEADING): cv.string,
-                vol.Optional(CONF_LINES, default=[]): vol.All(
-                    cv.ensure_list, [cv.string]
-                ),
-                vol.Optional(CONF_NAME): cv.string,
-            }
-        ],
+        vol.Required(CONF_FLIGHTINFO_APIKEY): cv.string,
+        vol.Required(CONF_WAIT_TIME_APIKEY): cv.string,
+        vol.Required(CONF_HOMEAIRPORT): cv.string,
+        vol.Required(CONF_FLIGHTNUMBER): cv.string,
+        vol.Optional(CONF_DATE): cv.string,
     }
 )
 
@@ -72,22 +59,27 @@ def setup_platform(
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     """Set up the flight info sensor."""
-
     sensors = []
 
-    coordinator: SwedaviaDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    mapping = dict()
+    mapping[CONF_FLIGHTINFO_APIKEY] = config.get(CONF_FLIGHTINFO_APIKEY)
+    mapping[CONF_WAIT_TIME_APIKEY] = config.get(CONF_WAIT_TIME_APIKEY)
+
+    configEntry: ConfigEntry = ConfigEntry(
+        domain=DOMAIN, data=mapping, version="0.1", title=DOMAIN, source=DOMAIN
+    )
 
     sensors.append(
         SwedaviaFlightandWaitTimeInfoSensor(
             SwedaviaDataUpdateCoordinator(
                 hass=hass,
-                entry=?,
-                airport=config.get(CONF_AIRPORT),
-                flight_number=config.get(CONF_FLIGHT_NUMBER),
+                entry=configEntry,
+                airport=config.get(CONF_HOMEAIRPORT),
+                flight_number=config.get(CONF_FLIGHTNUMBER),
                 date=config.get(CONF_DATE),
             ),
-            config.get(CONF_FLIGHT_NUMBER),
-            config.get(CONF_AIRPORT),
+            config.get(CONF_FLIGHTNUMBER),
+            config.get(CONF_HOMEAIRPORT),
             config.get(CONF_DATE),
         )
     )
@@ -100,9 +92,15 @@ class SwedaviaFlightandWaitTimeInfoSensor(SensorEntity):
     _attr_attribution = "Data provided by Swedavia"
     _attr_icon = "mdi:flight"
 
-    def __init__(self, swedavia_coordinator, flight_number, airport, date):
+    def __init__(
+        self,
+        swedavia_coordinator: SwedaviaDataUpdateCoordinator,
+        flight_number,
+        airport,
+        date,
+    ) -> None:
         """Initialize the sensor."""
-        self._coordinator = swedavia_coordinator
+        self._coordinator: SwedaviaDataUpdateCoordinator = swedavia_coordinator
         self._name = flight_number or airport
         self._state: FlightAndWaitTime | None = None
         self._attributes = None
@@ -126,4 +124,23 @@ class SwedaviaFlightandWaitTimeInfoSensor(SensorEntity):
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     def update(self) -> None:
         """Get the departure board."""
-        self._state = self._coordinator._async_update_data()
+        update = self._coordinator._update_data()
+        self._attributes = object_to_dict(update)
+        self._state = update.wait_info.terminal
+
+
+def object_to_dict(obj):
+    if isinstance(obj, (int, float, str, bool)):
+        return obj
+    elif isinstance(obj, list):
+        return [object_to_dict(item) for item in obj]
+    elif isinstance(obj, tuple):
+        return tuple(object_to_dict(item) for item in obj)
+    elif isinstance(obj, dict):
+        return {key: object_to_dict(value) for key, value in obj.items()}
+    elif obj is None:
+        return None
+    elif hasattr(obj, "__dict__"):
+        return object_to_dict(obj.__dict__)
+    else:
+        return str(obj)

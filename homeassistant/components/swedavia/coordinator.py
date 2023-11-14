@@ -61,26 +61,8 @@ class SwedaviaDataUpdateCoordinator(DataUpdateCoordinator[FlightAndWaitTime]):
     def _update_data(self) -> FlightAndWaitTime:
         """Fetch data from Swedavia."""
 
-        return FlightAndWaitTime(
-            wait_info=WaitTime(
-                id_="2",
-                current_projected_wait_time=5,
-                current_time=fill_date(None),
-                is_fast_track=True,
-                latitude=52.2,
-                longitude=24.1,
-                overflow=True,
-                queue_name="QUEUE",
-                terminal="TERMINALES",
-            ),
-            flight_info=FlightInfo(
-                continuationtoken="",
-                flights=[],
-            ),
-        )
-
         try:
-            flight_info_state = asyncio.run_coroutine_threadsafe(
+            flight_info_state : FlightInfo = asyncio.run_coroutine_threadsafe(
                 self._swedavia_api.async_get_flight_info(
                     airport=self.airport,
                     flight_number=self.flight_number,
@@ -89,7 +71,7 @@ class SwedaviaDataUpdateCoordinator(DataUpdateCoordinator[FlightAndWaitTime]):
                 self.hass.loop,
             ).result()
 
-            wait_time_state = asyncio.run_coroutine_threadsafe(
+            wait_time_state : WaitTime = asyncio.run_coroutine_threadsafe(
                 self._swedavia_api.async_get_wait_time(
                     airport=self.airport,
                     flight_number=self.flight_number,
@@ -107,5 +89,5 @@ class SwedaviaDataUpdateCoordinator(DataUpdateCoordinator[FlightAndWaitTime]):
 
         return FlightAndWaitTime(
             flight_info=flight_info_state,
-            wait_time=wait_time_state,
+            wait_info=wait_time_state,
         )

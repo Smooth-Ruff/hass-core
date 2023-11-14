@@ -12,7 +12,7 @@ class SwedaviaWrapper:
     flight_info_api_key: str
     wait_time_api_key: str
 
-    
+
     def __init__(
         self,
         client_session: aiohttp.ClientSession,
@@ -33,20 +33,20 @@ class SwedaviaWrapper:
     ) -> FlightInfo:
         base_url = "https://api.swedavia.se/flightinfo/v2/query"
         flight_type = 'D'
-        filter_params = f"airport eq '{airport}' and scheduled eq '{scheduled}' and flightType eq '{flight_type}' and flightId eq '{flight_number}'"
+        filter_params = f"airport eq '{airport}' and scheduled eq '{date}' and flightType eq '{flight_type}' and flightId eq '{flight_number}'"
         url = f"{base_url}?filter={filter_params}"
-    
+
         headers = {
             "Accept": "application/json",
             "Cache-Control": "no-cache",
             "Ocp-Apim-Subscription-Key": self.flight_info_api_key,
         }
-    
-        async with client_session.get(url, headers=headers) as response:
+
+        async with self.client_session.get(url, headers=headers) as response:
             if response.status == 200:
                 data = await response.json()
                 return FlightInfo.from_dict(data)
-    
+
             else:
                 raise Exception(
                     f"Failed to fetch flight info. Status code: {response.status}"
@@ -63,7 +63,7 @@ class SwedaviaWrapper:
             'Ocp-Apim-Subscription-Key': self.wait_time_api_key,
         }
 
-        async with client_session.get(url, headers=headers) as response:
+        async with self.client_session.get(url, headers=headers) as response:
             if response.status == 200:
                 data = await response.json()
                 return [WaitTime.from_dict(wait_time) for wait_time in data.get("waitTimes")]

@@ -124,9 +124,9 @@ class SwedaviaFlightandWaitTimeInfoSensor(SensorEntity):
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     def update(self) -> None:
         """Get the departure board."""
-        update = self._coordinator._update_data()
+        update : FlightAndWaitTime = self._coordinator._update_data()
         self._attributes = object_to_dict(update)
-        self._state = update.wait_info.terminal
+        self._state = update.flight_info.flights[0].departure.location_and_status.flight_leg_status if len(update.flight_info.flights)>=1 and hasattr(update.flight_info.flights[0],"departure") else "Unknown"
 
 
 def object_to_dict(obj):

@@ -10,14 +10,14 @@ import voluptuous as vol
 
 from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorEntity
 from homeassistant.core import HomeAssistant
+from typing import Any
+from collections.abc import Mapping
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import Throttle
-from .flight_data import FlightAndWaitTime
+from .flight_data import FlightAndWaitTime, Departure
 from homeassistant.config_entries import ConfigEntry
-
-_LOGGER = logging.getLogger(__name__)
 
 
 from .const import (
@@ -27,6 +27,9 @@ from .const import (
     CONF_WAIT_TIME_APIKEY,
     CONF_DATE,
 )
+
+
+_LOGGER = logging.getLogger(__name__)
 
 ATTR_ACCESSIBILITY = "accessibility"
 ATTR_DIRECTION = "direction"
@@ -56,7 +59,7 @@ def setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
     add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
+    _: DiscoveryInfoType | None = None,
 ) -> None:
     """Set up the flight info sensor."""
     sensors = []
@@ -65,22 +68,22 @@ def setup_platform(
     mapping[CONF_FLIGHTINFO_APIKEY] = config.get(CONF_FLIGHTINFO_APIKEY)
     mapping[CONF_WAIT_TIME_APIKEY] = config.get(CONF_WAIT_TIME_APIKEY)
 
-    configEntry: ConfigEntry = ConfigEntry(
-        domain=DOMAIN, data=mapping, version="0.1", title=DOMAIN, source=DOMAIN
+    config_entry: ConfigEntry = ConfigEntry(
+        domain=DOMAIN, data=mapping, version=1, title=DOMAIN, source=DOMAIN
     )
 
     sensors.append(
         SwedaviaFlightandWaitTimeInfoSensor(
             SwedaviaDataUpdateCoordinator(
                 hass=hass,
-                entry=configEntry,
-                airport=config.get(CONF_HOMEAIRPORT),
-                flight_number=config.get(CONF_FLIGHTNUMBER),
-                date=config.get(CONF_DATE),
+                entry=config_entry,
+                airport=str(config.get(CONF_HOMEAIRPORT)),
+                flight_number=str(config.get(CONF_FLIGHTNUMBER)),
+                date=str(config.get(CONF_DATE)),
             ),
-            config.get(CONF_FLIGHTNUMBER),
-            config.get(CONF_HOMEAIRPORT),
-            config.get(CONF_DATE),
+            str(config.get(CONF_FLIGHTNUMBER)),
+            str(config.get(CONF_HOMEAIRPORT)),
+            str(config.get(CONF_DATE)),
         )
     )
     add_entities(sensors, True)
@@ -93,54 +96,56 @@ class SwedaviaFlightandWaitTimeInfoSensor(SensorEntity):
     _attr_icon = "mdi:flight"
 
     def __init__(
-        self,
+        self: SwedaviaFlightandWaitTimeInfoSensor,
         swedavia_coordinator: SwedaviaDataUpdateCoordinator,
-        flight_number,
-        airport,
-        date,
+        flight_number: str,
+        airport: str,
+        date: str,
     ) -> None:
         """Initialize the sensor."""
         self._coordinator: SwedaviaDataUpdateCoordinator = swedavia_coordinator
         self._name = flight_number or airport
-        self._state: FlightAndWaitTime | None = None
-        self._attributes = None
+        self._state: str | None = None
+        self._attributes: dict[Any, Any] = dict()
         self._date = date
 
     @property
-    def name(self):
+    def name(self: SwedaviaFlightandWaitTimeInfoSensor) -> str:
         """Return the name of the sensor."""
         return self._name
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(
+        self: SwedaviaFlightandWaitTimeInfoSensor,
+    ) -> Mapping[str, Any] | None:
         """Return the state attributes."""
         return self._attributes
 
     @property
-    def native_value(self):
+    def native_value(
+        self: SwedaviaFlightandWaitTimeInfoSensor,
+    ) -> str | None:
         """Return the next departure time."""
         return self._state
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
-    def update(self) -> None:
+    def update(self: SwedaviaFlightandWaitTimeInfoSensor) -> None:
         """Get the departure board."""
-        update : FlightAndWaitTime = self._coordinator._update_data()
+        update: FlightAndWaitTime = self._coordinator.update_data()
         self._attributes = object_to_dict(update)
-        self._state = update.flight_info.flights[0].departure.location_and_status.flight_leg_status if len(update.flight_info.flights)>=1 and hasattr(update.flight_info.flights[0],"departure") else "Unknown"
+        self._state = (
+            update.flight_info.flights[
+                0
+            ].departure.location_and_status.flight_leg_status
+            if len(update.flight_info.flights) >= 1
+            and hasattr(update.flight_info.flights[0], "departure")
+            and type(update.flight_info.flights[0].departure) is Departure
+            else "Unknown"
+        )
 
 
-def object_to_dict(obj):
-    if isinstance(obj, (int, float, str, bool)):
-        return obj
-    elif isinstance(obj, list):
-        return [object_to_dict(item) for item in obj]
-    elif isinstance(obj, tuple):
-        return tuple(object_to_dict(item) for item in obj)
-    elif isinstance(obj, dict):
-        return {key: object_to_dict(value) for key, value in obj.items()}
-    elif obj is None:
-        return None
-    elif hasattr(obj, "__dict__"):
-        return object_to_dict(obj.__dict__)
-    else:
-        return str(obj)
+def object_to_dict(obj: FlightAndWaitTime) -> dict[Any, Any | list[Any]]:
+    result: dict[Any, Any | list[Any]] = dict()
+    result["flight_info"] = obj.flight_info.to_dict()
+    result["wait_info"] = [i.to_dict() for i in obj.wait_info]
+    return result

@@ -58,7 +58,7 @@ class SwedaviaDataUpdateCoordinator(DataUpdateCoordinator[FlightAndWaitTime]):
         self.hass = hass
         self._date: str = fill_date(date)
 
-    def _update_data(self: SwedaviaDataUpdateCoordinator) -> FlightAndWaitTime:
+    def update_data(self: SwedaviaDataUpdateCoordinator) -> FlightAndWaitTime:
         """Fetch data from Swedavia."""
 
         try:
@@ -71,7 +71,7 @@ class SwedaviaDataUpdateCoordinator(DataUpdateCoordinator[FlightAndWaitTime]):
                 self.hass.loop,
             ).result()
 
-            wait_time_state: WaitTime = asyncio.run_coroutine_threadsafe(
+            wait_time_state: list[WaitTime] = asyncio.run_coroutine_threadsafe(
                 self._swedavia_api.async_get_wait_time(
                     airport=self.airport,
                     flight_number=self.flight_number,

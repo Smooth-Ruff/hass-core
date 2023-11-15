@@ -31,13 +31,13 @@ TIME_BETWEEN_UPDATES = timedelta(minutes=5)
 class SwedaviaDataUpdateCoordinator(DataUpdateCoordinator[FlightAndWaitTime]):
     """A Swedavia Data Update Coordinator."""
 
-    def __init__(
-        self,
+    def __init__(  # noqa: PLR0913
+        self: SwedaviaDataUpdateCoordinator,
         hass: HomeAssistant,
         entry: ConfigEntry,
-        airport: str | None,
-        flight_number: str | None,
-        date: str | None,
+        airport: str,
+        flight_number: str,
+        date: str,
     ) -> None:
         """Initialize the Swedavia coordinator."""
         super().__init__(
@@ -56,13 +56,13 @@ class SwedaviaDataUpdateCoordinator(DataUpdateCoordinator[FlightAndWaitTime]):
         self.flight_number: str = flight_number
 
         self.hass = hass
-        self._date: date = fill_date(date)
+        self._date: str = fill_date(date)
 
-    def _update_data(self) -> FlightAndWaitTime:
+    def _update_data(self: SwedaviaDataUpdateCoordinator) -> FlightAndWaitTime:
         """Fetch data from Swedavia."""
 
         try:
-            flight_info_state : FlightInfo = asyncio.run_coroutine_threadsafe(
+            flight_info_state: FlightInfo = asyncio.run_coroutine_threadsafe(
                 self._swedavia_api.async_get_flight_info(
                     airport=self.airport,
                     flight_number=self.flight_number,
@@ -71,7 +71,7 @@ class SwedaviaDataUpdateCoordinator(DataUpdateCoordinator[FlightAndWaitTime]):
                 self.hass.loop,
             ).result()
 
-            wait_time_state : WaitTime = asyncio.run_coroutine_threadsafe(
+            wait_time_state: WaitTime = asyncio.run_coroutine_threadsafe(
                 self._swedavia_api.async_get_wait_time(
                     airport=self.airport,
                     flight_number=self.flight_number,

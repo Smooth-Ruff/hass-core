@@ -530,4 +530,4 @@ class WaitTime:
 @dataclass
 class FlightAndWaitTime:
     flight_info: FlightInfo
-    wait_info: WaitTime
+    wait_info: List[WaitTime]

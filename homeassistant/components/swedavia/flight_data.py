@@ -529,5 +529,5 @@ class WaitTime:
 
 @dataclass
 class FlightAndWaitTime:
-    flight_info: Flight
+    flight_info: FlightInfo
     wait_info: WaitTime

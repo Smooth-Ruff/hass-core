@@ -11,6 +11,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from typing import Coroutine
 
 from .const import DOMAIN, CONF_WAIT_TIME_APIKEY, CONF_FLIGHTINFO_APIKEY
 from .util import fill_date
@@ -57,6 +58,9 @@ class SwedaviaDataUpdateCoordinator(DataUpdateCoordinator[FlightAndWaitTime]):
 
         self.hass = hass
         self._date: str = fill_date(date)
+
+    async def _async_update_data(self) -> FlightAndWaitTime:
+        return self.update_data()
 
     def update_data(self: SwedaviaDataUpdateCoordinator) -> FlightAndWaitTime:
         """Fetch data from Swedavia."""

@@ -11,7 +11,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from typing import Coroutine
 
 from .const import DOMAIN, CONF_WAIT_TIME_APIKEY, CONF_FLIGHTINFO_APIKEY
 from .util import fill_date
@@ -59,30 +58,26 @@ class SwedaviaDataUpdateCoordinator(DataUpdateCoordinator[FlightAndWaitTime]):
         self.hass = hass
         self._date: str = fill_date(date)
 
-    async def _async_update_data(self) -> FlightAndWaitTime:
-        return self.update_data()
-
-    def update_data(self: SwedaviaDataUpdateCoordinator) -> FlightAndWaitTime:
+    async def _async_update_data(
+        self: SwedaviaDataUpdateCoordinator,
+    ) -> FlightAndWaitTime:
         """Fetch data from Swedavia."""
-
         try:
-            flight_info_state: FlightInfo = asyncio.run_coroutine_threadsafe(
-                self._swedavia_api.async_get_flight_info(
+            flight_info_state: FlightInfo = (
+                await self._swedavia_api.async_get_flight_info(
                     airport=self.airport,
                     flight_number=self.flight_number,
                     date=self._date,
-                ),
-                self.hass.loop,
-            ).result()
+                )
+            )
 
-            wait_time_state: list[WaitTime] = asyncio.run_coroutine_threadsafe(
-                self._swedavia_api.async_get_wait_time(
-                    airport=self.airport,
-                    flight_number=self.flight_number,
-                    date=self._date,
-                ),
-                self.hass.loop,
-            ).result()
+            wait_time_state: list[
+                WaitTime
+            ] = await self._swedavia_api.async_get_wait_time(
+                airport=self.airport,
+                flight_number=self.flight_number,
+                date=self._date,
+            )
 
         except (InvalidFlightInfoKey, InvalidWaitTimeKey) as error:
             raise ConfigEntryAuthFailed from error
@@ -95,3 +90,21 @@ class SwedaviaDataUpdateCoordinator(DataUpdateCoordinator[FlightAndWaitTime]):
             flight_info=flight_info_state,
             wait_info=wait_time_state,
         )
+
+    def update_data(self: SwedaviaDataUpdateCoordinator) -> FlightAndWaitTime:
+        """Fetch data from Swedavia."""
+        try:
+            flight_info_and_wait_time: FlightAndWaitTime = (
+                asyncio.run_coroutine_threadsafe(
+                    self._async_update_data(),
+                    self.hass.loop,
+                ).result()
+            )
+        except (InvalidFlightInfoKey, InvalidWaitTimeKey) as error:
+            raise ConfigEntryAuthFailed from error
+        except (InvalidtFlightNumber, InvalidAirport) as error:
+            raise UpdateFailed(
+                f" Error fetching information related to flight {self.flight_number} from {self.airport}: {error}"
+            ) from error
+
+        return flight_info_and_wait_time

@@ -54,7 +54,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
-
 def setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
@@ -87,6 +86,32 @@ def setup_platform(
         )
     )
     add_entities(sensors, True)
+
+async def async_setup_entry(
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+) -> None:
+
+    coordinator = SwedaviaDataUpdateCoordinator(
+        hass,
+        entry,
+        airport=entry.data[CONF_HOMEAIRPORT],
+        flight_number=entry.data[CONF_FLIGHTNUMBER],
+        date=entry.data.get(CONF_DATE),
+    )
+    await coordinator.async_config_entry_first_refresh()
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
+
+    async_add_entities(
+        [
+            SwedaviaFlightandWaitTimeInfoSensor(
+                coordinator,
+                entry.data[CONF_FLIGHTNUMBER],
+                entry.data[CONF_HOMEAIRPORT],
+                entry.data.get(CONF_DATE),
+            )
+        ],
+        True,
+    )
 
 
 class SwedaviaFlightandWaitTimeInfoSensor(SensorEntity):
@@ -129,9 +154,9 @@ class SwedaviaFlightandWaitTimeInfoSensor(SensorEntity):
         return self._state
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
-    def update(self: SwedaviaFlightandWaitTimeInfoSensor) -> None:
+    async def async_update(self: SwedaviaFlightandWaitTimeInfoSensor) -> None:
         """Get the departure board."""
-        update: FlightAndWaitTime = self._coordinator.update_data()
+        update: FlightAndWaitTime = await self._coordinator._async_update_data()
         self._attributes = object_to_dict(update)
         self._state = (
             update.flight_info.flights[

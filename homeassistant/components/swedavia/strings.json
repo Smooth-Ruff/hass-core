@@ -4,7 +4,7 @@
       "user": {
         "title": "Configure Swedavia Integration",
         "data": {
-          "flight_info_key": "Flight Api key",
+          "flight_info_key": "Flight API key",
           "wait_time_key": "Wait API Key",
           "home_airport": "Home Airport",
           "flight_number": "Flight Number",
@@ -19,6 +19,25 @@
     },
     "abort": {
       "already_configured": "This Swedavia integration is already configured."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "home_airport": {
+        "name": "Home Airport"
+      },
+      "flight_info_key": {
+        "name": "Flight info key"
+      },
+      "wait_time_key": {
+        "name": "Wait info key"
+      },
+      "flight_date": {
+        "name": "Flight info key"
+      },
+      "flight_number": {
+        "name": "Flight number"
+      }
     }
   }
 }

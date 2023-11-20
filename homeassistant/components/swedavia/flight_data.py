@@ -9,7 +9,7 @@ T = TypeVar("T")
 
 
 def from_str(x: Any) -> str:
-    assert isinstance(x, str)
+    #assert isinstance(x, str)
     return x
 
 
@@ -434,7 +434,7 @@ class Flight:
             )
         return result
 
-
+@dataclass
 class FlightInfo:
     flights: List[Flight]
     continuationtoken: str

@@ -1,9 +1,12 @@
+from asyncio import sleep
+from datetime import timedelta
+import time
 import aiohttp
 
 
 from homeassistant.core import HomeAssistant
 from .flight_data import FlightInfo, WaitTime
-
+from .const import MOCK_FLIGHTINFO
 
 class SwedaviaWrapper:
     """Class used to communicate with Swedavia's api."""
@@ -35,7 +38,8 @@ class SwedaviaWrapper:
         flight_type = 'D'
         filter_params = f"airport eq '{airport}' and scheduled eq '{date}' and flightType eq '{flight_type}' and flightId eq '{flight_number}'"
         url = f"{base_url}?filter={filter_params}"
-
+        return FlightInfo.from_dict(MOCK_FLIGHTINFO)
+        """
         headers = {
             "Accept": "application/json",
             "Cache-Control": "no-cache",
@@ -51,7 +55,7 @@ class SwedaviaWrapper:
                 raise Exception(
                     f"Failed to fetch flight info. Status code: {response.status}"
                 )
-
+        """
     async def async_get_wait_time(
         self, airport: str, flight_number: str, date: str
     ) -> [WaitTime]:

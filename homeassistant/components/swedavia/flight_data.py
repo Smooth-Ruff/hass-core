@@ -469,7 +469,7 @@ def flight_info_to_dict(x: FlightInfo) -> Any:
 class WaitTime:
     id_: int
     queue_name: str
-    current_time: date
+    current_time: datetime
     current_projected_wait_time: int
     is_fast_track: bool
     terminal: str
@@ -481,7 +481,7 @@ class WaitTime:
         self,
         id_: str,
         queue_name: str,
-        current_time: date,
+        current_time: datetime,
         current_projected_wait_time: int,
         is_fast_track: bool,
         terminal: str,
@@ -504,7 +504,7 @@ class WaitTime:
         return WaitTime(
             d.get("id"),
             d.get("queueName"),
-            d.get("currentTime"),
+            datetime.strptime(d.get("currentTime"), "%Y-%m-%dT%H:%M:%SZ").strftime("%Y-%m-%d %H:%M:%S"),
             d.get("currentProjectedWaitTime"),
             d.get("isFastTrack"),
             d.get("terminal"),

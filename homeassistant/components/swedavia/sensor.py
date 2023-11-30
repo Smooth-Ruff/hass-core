@@ -53,27 +53,35 @@ DEFAULT_DELAY = 0
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=10)
 
 @dataclass
-class SWRequiredKeysMixinWT:
+class SWRequiredKeysMixin:
     """Mixin for required keys."""
-
+    key : str
+    title: str
+    icon: str
     value_fn: Callable[[WaitTime], StateType | datetime]
 
 @dataclass
 class SWSensorEntityDescription(
-    SensorEntityDescription, SWRequiredKeysMixinWT
+    SensorEntityDescription, SWRequiredKeysMixin
 ):
     """Describes Swedavia sensor entity."""
 
-"""
+
 SENSOR_TYPES: tuple[SWSensorEntityDescription, ...] = (
     SWSensorEntityDescription(
-        key="current_time",
+        key = "wait_time",
+        title = "Projected wait time",
+        icon="mdi:airplane-clock",
+        value_fn=lambda data: data.wait_info[0].current_projected_wait_time,
+    ),
+    SWSensorEntityDescription(
+        key = "current_time",
+        title = "Current Time",
         icon="mdi:clock",
-        device_class=SensorDeviceClass.TIMESTAMP,
-        value_fn=lambda data: data.current_time,
+        value_fn=lambda data: data.wait_info[0].current_time,
     ),
 )
-"""
+
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
@@ -82,11 +90,12 @@ async def async_setup_entry(
 
     coordinator: SwedaviaDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    async_add_entities([SwedaviaFlightandWaitTimeInfoSensor(coordinator,
-                                                            entry.data[CONF_FLIGHTNUMBER],
-                                                            entry.data[CONF_HOMEAIRPORT],
-                                                            entry.entry_id,
-                                                            entry.data[CONF_DATE])])
+    async_add_entities(
+        [
+            SwedaviaFlightandWaitTimeInfoSensor(coordinator, entry.data[CONF_FLIGHTNUMBER], entry.data[CONF_HOMEAIRPORT], entry.entry_id, entry.data[CONF_DATE], description)
+            for description in SENSOR_TYPES
+        ]
+    )
 
 class SwedaviaFlightandWaitTimeInfoSensor(CoordinatorEntity[SwedaviaDataUpdateCoordinator], SensorEntity):
     """Implementation of a Swedavia Flight and WaitTime Info Sensor."""
@@ -102,11 +111,14 @@ class SwedaviaFlightandWaitTimeInfoSensor(CoordinatorEntity[SwedaviaDataUpdateCo
         airport: str,
         entry_id: str,
         date: str,
+        description: SWSensorEntityDescription,
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
+        self._attr_icon = description.icon
         self._state = super().state
-        self._attr_unique_id = entry_id
+        self.description = description
+        self._attr_unique_id = f"{entry_id}--{description.key}"
         self.flight_number = flight_number
         self.airport = airport
         self.date = date
@@ -120,14 +132,8 @@ class SwedaviaFlightandWaitTimeInfoSensor(CoordinatorEntity[SwedaviaDataUpdateCo
     def name(self: SwedaviaFlightandWaitTimeInfoSensor) -> str:
         """Return the name of the sensor."""
         #return f"{self.airport} : {self.flight_number}"
-        return "Projected waittime"
-    """
-    @property
-    def extra_state_attributes(
-        self: SwedaviaFlightandWaitTimeInfoSensor,
-    ) -> Mapping[str, Any] | None:
-        return self._attributes
-    """
+        return self.description.title
+
 
     @property
     def native_value(
@@ -137,8 +143,8 @@ class SwedaviaFlightandWaitTimeInfoSensor(CoordinatorEntity[SwedaviaDataUpdateCo
         return self._state
     @callback
     def _update_attr(self) -> None:
-        self._attr_native_value = self.coordinator.data.flight_info.flights
-        self._state = self.coordinator.data.wait_info[0].current_projected_wait_time
+        self._attr_native_value = self.description.value_fn(self.coordinator.data)
+        self._state = self.description.value_fn(self.coordinator.data)
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     def _handle_coordinator_update(self) -> None:

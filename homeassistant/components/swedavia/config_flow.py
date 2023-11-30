@@ -1,5 +1,7 @@
+from typing import Any
 import voluptuous as vol
 from homeassistant import config_entries
+from homeassistant.data_entry_flow import FlowResult
 from .const import (
     DOMAIN,
     CONF_FLIGHTINFO_APIKEY,
@@ -9,6 +11,15 @@ from .const import (
     CONF_DATE,
 )
 
+data_schema = vol.Schema(
+            {
+                vol.Required(CONF_FLIGHTINFO_APIKEY): str,
+                vol.Required(CONF_WAIT_TIME_APIKEY): str,
+                vol.Required(CONF_HOMEAIRPORT): str,
+                vol.Required(CONF_FLIGHTNUMBER): str,
+                vol.Required(CONF_DATE): str,
+            }
+        )
 
 class SwedaviaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Swedavia integration."""
@@ -16,7 +27,8 @@ class SwedaviaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
 
-    async def async_step_user(self, user_input=None):
+    async def async_step_user(self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Handle the initial step."""
         errors = {}
         if user_input is not None:
@@ -36,15 +48,7 @@ class SwedaviaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 },
             )
 
-        data_schema = vol.Schema(
-            {
-                vol.Required(CONF_FLIGHTINFO_APIKEY): str,
-                vol.Required(CONF_WAIT_TIME_APIKEY): str,
-                vol.Required(CONF_HOMEAIRPORT): str,
-                vol.Required(CONF_FLIGHTNUMBER): str,
-                vol.Required(CONF_DATE): str,
-            }
-        )
+
 
         return self.async_show_form(
             step_id="user", data_schema=data_schema, errors=errors

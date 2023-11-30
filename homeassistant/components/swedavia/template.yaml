@@ -1,0 +1,23 @@
+template:
+  - sensor:
+    - name: "{{ state_attr('sensor.LH817', 'wait_info')[1].queueName }} Wait Time"
+      state: "{{ state_attr('sensor.LH817', 'wait_info')[1].currentProjectedWaitTime }} Minutes"
+      attributes:
+        queue_name: "{{ state_attr('sensor.LH817', 'wait_info')[1].queueName }}"
+        fast_track: "{{ state_attr('sensor.LH817', 'wait_info')[1].isFastTrack }}"
+        wait_time: "{{ state_attr('sensor.LH817', 'wait_info')[1].currentProjectedWaitTime }}"
+    - name: "{{ state_attr('sensor.LH817', 'wait_info')[0].queueName }} Wait Time"
+      state: "{{ state_attr('sensor.LH817', 'wait_info')[0].currentProjectedWaitTime }} Minutes"
+      attributes:
+        queue_name: "{{ state_attr('sensor.LH817', 'wait_info')[0].queueName }}"
+        fast_track: "{{ state_attr('sensor.LH817', 'wait_info')[0].isFastTrack }}"
+        wait_time: "{{ state_attr('sensor.LH817', 'wait_info')[0].currentProjectedWaitTime }} "
+    - name: "Flight Info"
+      state: "Flight {{ state_attr('sensor.LH817', 'flight_info').flights[0].departure.flightId}} at {{ state_attr('sensor.LH817', 'flight_info').flights[0].departure.flightLegIdentifier.departureAirportIata}}"
+      attributes:
+        flight_id: "{{ state_attr('sensor.LH817', 'flight_info').flights[0].departure.flightId}}"
+        airline: "{{ state_attr('sensor.LH817', 'flight_info').flights[0].departure.airlineOperator.name}}"
+        arrival_airport: "{{ state_attr('sensor.LH817', 'flight_info').flights[0].departure.arrivalAirportSwedish}}"
+        scheduled_departure: "{{ state_attr('sensor.LH817', 'flight_info').flights[0].departure.departureTime.scheduledUtc}}"
+        terminal: "{{ state_attr('sensor.LH817', 'flight_info').flights[0].departure.locationAndStatus.terminal}}"
+

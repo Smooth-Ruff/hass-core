@@ -1,4 +1,4 @@
-"""DataUpdateCoordinator for the Trafikverket Train integration."""
+"""DataUpdateCoordinator for the Swedavia integration."""
 from __future__ import annotations
 
 from datetime import timedelta
@@ -31,7 +31,7 @@ TIME_BETWEEN_UPDATES = timedelta(minutes=5)
 class SwedaviaDataUpdateCoordinator(DataUpdateCoordinator[FlightAndWaitTime]):
     """A Swedavia Data Update Coordinator."""
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self: SwedaviaDataUpdateCoordinator,
         hass: HomeAssistant,
         entry: ConfigEntry,
@@ -90,21 +90,3 @@ class SwedaviaDataUpdateCoordinator(DataUpdateCoordinator[FlightAndWaitTime]):
             flight_info=flight_info_state,
             wait_info=wait_time_state,
         )
-
-    def update_data(self: SwedaviaDataUpdateCoordinator) -> FlightAndWaitTime:
-        """Fetch data from Swedavia."""
-        try:
-            flight_info_and_wait_time: FlightAndWaitTime = (
-                asyncio.run_coroutine_threadsafe(
-                    self._async_update_data(),
-                    self.hass.loop,
-                ).result()
-            )
-        except (InvalidFlightInfoKey, InvalidWaitTimeKey) as error:
-            raise ConfigEntryAuthFailed from error
-        except (InvalidtFlightNumber, InvalidAirport) as error:
-            raise UpdateFailed(
-                f" Error fetching information related to flight {self.flight_number} from {self.airport}: {error}"
-            ) from error
-
-        return flight_info_and_wait_time

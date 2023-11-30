@@ -1,4 +1,4 @@
-"""The trafikverket_train component."""
+"""The Swedavia component."""
 from __future__ import annotations
 
 
@@ -29,8 +29,8 @@ from .swedavia_wrapper import (
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up Trafikverket Train from a config entry."""
-
+    """Set up Swedavia Integration from a config entry."""
+    hass.data.setdefault(DOMAIN, {})
     http_session = async_get_clientsession(hass)
     swedavia_api = SwedaviaWrapper(
         client_session=http_session,
@@ -66,6 +66,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
     await coordinator.async_config_entry_first_refresh()
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
+    #hass.data[DOMAIN][entry.entry_id] = coordinator
 
     entity_reg = er.async_get(hass)
     entries = er.async_entries_for_config_entry(entity_reg, entry.entry_id)
@@ -73,7 +74,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if not entity.unique_id.startswith(entry.entry_id):
             entity_reg.async_update_entity(
                 entity.entity_id,
-                new_unique_id=f"{entry.entry_id}-flight-info-and-wait-times",
+                new_unique_id=f"{entry.entry_id}-departure_time",
             )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -83,9 +84,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload Trafikverket Weatherstation config entry."""
+    """Unload Swedavia config entry."""
 
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
+        hass.data[DOMAIN].pop(entry.entry_id)
+
+    return unload_ok
 
 
 async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:

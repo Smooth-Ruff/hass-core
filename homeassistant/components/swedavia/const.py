@@ -30,13 +30,10 @@ MOCK_FLIGHTINFO = {
                 "name": "Lufthansa"
             },
             "departureTime": {
-                "scheduledUtc": "2023-11-19T12:50:00Z"
+                "scheduledUtc": "2023-11-24T13:00:00Z"
             },
             "locationAndStatus": {
                 "terminal": "T1",
-                "gate": "16",
-                "gateAction": "I",
-                "gateOpenUtc": "2023-11-19T12:15:51Z",
                 "flightLegStatus": "SCH",
                 "flightLegStatusSwedish": "Planerad",
                 "flightLegStatusEnglish": "Scheduled"
@@ -45,28 +42,21 @@ MOCK_FLIGHTINFO = {
                 "checkInDeskFrom": 39,
                 "checkInDeskTo": 44
             },
-            "codeShareData": ["A31461", "AC9613", "NH6192", "OS7480", "SK3619", "SN7072", "TP7503", "UA8803"],
+            "codeShareData": ["A31461", "AC9613", "EY3793", "NH6192", "OS7480", "SK3619", "TP7503", "UA8803"],
             "flightLegIdentifier": {
                 "callsign": "DLH6EK",
-                "aircraftRegistration": "DAIZG",
                 "flightId": "LH817",
-                "flightDepartureDateUtc": "2023-11-19T00:00:00Z",
+                "flightDepartureDateUtc": "2023-11-24T00:00:00Z",
                 "departureAirportIata": "GOT",
                 "arrivalAirportIata": "FRA",
                 "departureAirportIcao": "ESGG",
                 "arrivalAirportIcao": "EDDF"
             },
             "viaDestinations": [],
-            "remarksEnglish": [{
-                "text": "Go to Gate",
-                "indicator": "NEUTRAL"
-            }],
-            "remarksSwedish": [{
-                "text": "Gå till gate",
-                "indicator": "NEUTRAL"
-            }],
+            "remarksEnglish": [],
+            "remarksSwedish": [],
             "diIndicator": "S"
         }
     }],
-    "continuationtoken": "H4sIAAAAAAAEADM0NzAwtjQzNTHQMU4xMDa2SLMwMzW1TEtJSzYAAgCP7PmvHwAAAA=="
+    "continuationtoken": "H4sIAAAAAAAEADM0NzAwNzQyMrfQMU40MElNMjI1MzVNTU4zNTMAAgCnsq+6HwAAAA=="
 }

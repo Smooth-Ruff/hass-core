@@ -23,20 +23,13 @@
   },
   "entity": {
     "sensor": {
-      "home_airport": {
-        "name": "Home Airport"
-      },
-      "flight_info_key": {
-        "name": "Flight info key"
-      },
-      "wait_time_key": {
-        "name": "Wait info key"
-      },
-      "flight_date": {
-        "name": "Flight info key"
-      },
-      "flight_number": {
-        "name": "Flight number"
+      "departure_time": {
+        "name": "Departure time",
+        "state_attributes": {
+          "product_filter": {
+            "name": ""
+          }
+        }
       }
     }
   }

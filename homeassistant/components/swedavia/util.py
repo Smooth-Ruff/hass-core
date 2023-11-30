@@ -1,4 +1,4 @@
-"""Utils for trafikverket_train."""
+"""Utils for Swedavia."""
 from __future__ import annotations
 
 from datetime import date, time, timedelta, datetime

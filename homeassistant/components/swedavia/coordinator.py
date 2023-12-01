@@ -14,7 +14,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .const import DOMAIN, CONF_WAIT_TIME_APIKEY, CONF_FLIGHTINFO_APIKEY
 from .util import fill_date
-from .flight_data import FlightAndWaitTime, WaitTime, FlightInfo
+from .flight_data import Departure, FlightAndWaitTime, WaitTime, FlightInfo
 from .swedavia_wrapper import (
     SwedaviaWrapper,
     InvalidAirport,
@@ -63,7 +63,7 @@ class SwedaviaDataUpdateCoordinator(DataUpdateCoordinator[FlightAndWaitTime]):
     ) -> FlightAndWaitTime:
         """Fetch data from Swedavia."""
         try:
-            flight_info_state: FlightInfo = (
+            flight_info_state: Departure = (
                 await self._swedavia_api.async_get_flight_info(
                     airport=self.airport,
                     flight_number=self.flight_number,

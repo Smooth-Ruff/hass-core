@@ -70,7 +70,7 @@ class SWSensorEntityDescription(
 SENSOR_TYPES: tuple[SWSensorEntityDescription, ...] = (
     SWSensorEntityDescription(
         key = "wait_time",
-        title = "Projected wait time",
+        title = "Projected Wait Time",
         icon="mdi:airplane-clock",
         value_fn=lambda data: data.wait_info[0].current_projected_wait_time,
     ),
@@ -79,6 +79,18 @@ SENSOR_TYPES: tuple[SWSensorEntityDescription, ...] = (
         title = "Current Time",
         icon="mdi:clock",
         value_fn=lambda data: data.wait_info[0].current_time,
+    ),
+    SWSensorEntityDescription(
+        key = "flight_id",
+        title = "Flight ID",
+        icon="mdi:airplane",
+        value_fn=lambda data: data.flight_info[0].flight_id,
+    ),
+    SWSensorEntityDescription(
+        key = "departure_time",
+        title = "Departure Time",
+        icon="mdi:airplane",
+        value_fn=lambda data: data.flight_info[0].departure_time,
     ),
 )
 
@@ -131,7 +143,6 @@ class SwedaviaFlightandWaitTimeInfoSensor(CoordinatorEntity[SwedaviaDataUpdateCo
     @property
     def name(self: SwedaviaFlightandWaitTimeInfoSensor) -> str:
         """Return the name of the sensor."""
-        #return f"{self.airport} : {self.flight_number}"
         return self.description.title
 
 

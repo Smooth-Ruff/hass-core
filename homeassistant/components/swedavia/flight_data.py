@@ -14,10 +14,14 @@ def from_str(x: Any) -> str:
 
 
 def from_datetime(x: Any) -> datetime:
+    if not x:
+        return datetime.now()
     return dateutil.parser.parse(x)
 
 
 def from_list(f: Callable[[Any], T], x: Any) -> List[T]:
+    if x is None:
+        return []
     assert isinstance(x, list)
     return [f(y) for y in x]
 
@@ -74,10 +78,11 @@ class Time:
         self.scheduled_utc = scheduled_utc
 
     @staticmethod
-    def from_dict(obj: Any) -> "Time":
+    def from_dict(obj: Any) -> str:
         assert isinstance(obj, dict)
-        scheduled_utc = from_datetime(obj.get("scheduledUtc"))
-        return Time(scheduled_utc)
+        scheduled_utc = from_str(obj.get("scheduledUtc"))
+        formatted_string = datetime.strptime(scheduled_utc, "%Y-%m-%dT%H:%M:%SZ").strftime("%Y-%m-%d %H:%M:%S")
+        return formatted_string
 
     def to_dict(self) -> dict:
         result: dict = {}
@@ -135,7 +140,7 @@ class FlightLegIdentifier:
         assert isinstance(obj, dict)
         callsign = from_str(obj.get("callsign"))
         flight_id = from_str(obj.get("flightId"))
-        flight_departure_date_utc = from_datetime(obj.get("flightDepartureDateUtc"))
+        flight_departure_date_utc = from_datetime(obj.get("flightDepartureDateUtc", ""))
         departure_airport_iata = from_str(obj.get("departureAirportIata"))
         arrival_airport_iata = from_str(obj.get("arrivalAirportIata"))
         departure_airport_icao = from_str(obj.get("departureAirportIcao"))
@@ -303,7 +308,7 @@ class Arrival:
         result["diIndicator"] = from_str(self.di_indicator)
         return result
 
-
+@dataclass
 class Departure:
     flight_id: str
     arrival_airport_swedish: str
@@ -325,7 +330,7 @@ class Departure:
         arrival_airport_swedish: str,
         arrival_airport_english: str,
         airline_operator: AirlineOperator,
-        departure_time: Time,
+        departure_time: datetime,
         location_and_status: LocationAndStatus,
         check_in: Baggage,
         code_share_data: List[Any],
@@ -350,38 +355,30 @@ class Departure:
         self.di_indicator = di_indicator
 
     @staticmethod
-    def from_dict(obj: Any) -> "Departure":
+    def from_dict(obj: Any):
         assert isinstance(obj, dict)
-        flight_id = from_str(obj.get("flightId"))
-        arrival_airport_swedish = from_str(obj.get("arrivalAirportSwedish"))
-        arrival_airport_english = from_str(obj.get("arrivalAirportEnglish"))
-        airline_operator = AirlineOperator.from_dict(obj.get("airlineOperator"))
-        departure_time = Time.from_dict(obj.get("departureTime"))
-        location_and_status = LocationAndStatus.from_dict(obj.get("locationAndStatus"))
-        check_in = Baggage.from_dict(obj.get("checkIn"))
-        code_share_data = from_list(lambda x: x, obj.get("codeShareData"))
-        flight_leg_identifier = FlightLegIdentifier.from_dict(
-            obj.get("flightLegIdentifier")
-        )
-        via_destinations = from_list(lambda x: x, obj.get("viaDestinations"))
-        remarks_english = from_list(lambda x: x, obj.get("remarksEnglish"))
-        remarks_swedish = from_list(lambda x: x, obj.get("remarksSwedish"))
-        di_indicator = from_str(obj.get("diIndicator"))
-        return Departure(
-            flight_id,
-            arrival_airport_swedish,
-            arrival_airport_english,
-            airline_operator,
-            departure_time,
-            location_and_status,
-            check_in,
-            code_share_data,
-            flight_leg_identifier,
-            via_destinations,
-            remarks_english,
-            remarks_swedish,
-            di_indicator,
-        )
+        departures_dict = obj.get("flights", [])
+        flight_arr = []
+
+        for flight_data in departures_dict:
+            flight = Departure(
+                flight_id=from_str(flight_data.get("flightId")),
+                arrival_airport_swedish=from_str(flight_data.get("arrivalAirportSwedish")),
+                arrival_airport_english=from_str(flight_data.get("arrivalAirportEnglish")),
+                airline_operator=AirlineOperator.from_dict(flight_data.get("airlineOperator", {})),
+                departure_time=Time.from_dict(flight_data.get("departureTime")) if "departureTime" in flight_data else datetime.now(),
+                location_and_status=LocationAndStatus.from_dict(flight_data.get("locationAndStatus", {})),
+                check_in=Baggage.from_dict(flight_data.get("checkIn", {})),
+                code_share_data=from_list(lambda x: x, flight_data.get("codeShareData", [])),
+                flight_leg_identifier=FlightLegIdentifier.from_dict(flight_data.get("flightLegIdentifier", {})),
+                via_destinations=from_list(lambda x: x, flight_data.get("viaDestinations", [])),
+                remarks_english=from_list(lambda x: x, flight_data.get("remarksEnglish", [])),
+                remarks_swedish=from_list(lambda x: x, flight_data.get("remarksSwedish", [])),
+                di_indicator=from_str(flight_data.get("diIndicator", {}))
+            )
+            flight_arr.append(flight)
+
+        return flight_arr
 
     def to_dict(self) -> dict:
         result: dict = {}
@@ -529,5 +526,22 @@ class WaitTime:
 
 @dataclass
 class FlightAndWaitTime:
-    flight_info: FlightInfo
+    flight_info: List[Departure]  # Change the type to a list of Departure
     wait_info: List[WaitTime]
+
+    def __init__(self, flight_info: List[Departure], wait_info: List[WaitTime]) -> None:
+        self.flight_info = flight_info
+        self.wait_info = wait_info
+
+    @staticmethod
+    def from_dict(obj: Any) -> "FlightAndWaitTime":
+        assert isinstance(obj, dict)
+        flight_info = from_list(Departure.from_dict, obj.get("flight_info"))
+        wait_info = from_list(WaitTime.from_dict, obj.get("wait_info"))
+        return FlightAndWaitTime(flight_info, wait_info)
+
+    def to_dict(self) -> dict:
+        result: dict = {}
+        result["flight_info"] = from_list(lambda x: to_class(Departure, x), self.flight_info)
+        result["wait_info"] = from_list(lambda x: to_class(WaitTime, x), self.wait_info)
+        return result

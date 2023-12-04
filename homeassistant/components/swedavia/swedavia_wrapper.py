@@ -9,7 +9,7 @@ from .flight_data import Departure, FlightInfo, WaitTime
 from .const import MOCK_FLIGHTINFO
 
 class SwedaviaWrapper:
-    """Class used to communicate with Swedavia's api."""
+    """Class used to communicate with Swedavia API."""
 
     client_session: aiohttp.ClientSession
     flight_info_api_key: str
@@ -34,6 +34,7 @@ class SwedaviaWrapper:
     async def async_get_flight_info(
         self, airport: str, flight_number: str, date: str
     ) -> Departure:
+        """Fetches Swedavia FlightInfo API data through query call based on config entries."""
         base_url = "https://api.swedavia.se/flightinfo/v2/query"
         flight_type = 'D'
         filter_params = f"airport eq '{airport}' and scheduled eq '{date}' and flightType eq '{flight_type}' and flightId eq '{flight_number}'"
@@ -58,6 +59,7 @@ class SwedaviaWrapper:
     async def async_get_wait_time(
         self, airport: str, flight_number: str, date: str
     ) -> [WaitTime]:
+        """Fetches Swedavia WaitTime API data through call based on config entries."""
         url = f"https://api.swedavia.se/waittimepublic/v2/airports/{airport}/flights?flightid={flight_number}&date={date}"
 
         headers = {

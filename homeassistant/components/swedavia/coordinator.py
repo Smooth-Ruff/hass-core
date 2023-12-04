@@ -61,7 +61,7 @@ class SwedaviaDataUpdateCoordinator(DataUpdateCoordinator[FlightAndWaitTime]):
     async def _async_update_data(
         self: SwedaviaDataUpdateCoordinator,
     ) -> FlightAndWaitTime:
-        """Fetch data from Swedavia."""
+        """Fetch data from Swedavia API."""
         try:
             flight_info_state: Departure = (
                 await self._swedavia_api.async_get_flight_info(

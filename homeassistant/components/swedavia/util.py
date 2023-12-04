@@ -40,6 +40,7 @@ def next_departuredate(departure: list[str]) -> date:
 
 
 def fill_date(date_variable: str | None) -> str:
+    """Changes date to current datetime if no date is available."""
     if date_variable is None:
         today = datetime.now(tz=dt_util.DEFAULT_TIME_ZONE).date()
         date_variable = today.strftime("%y-%m-%d")

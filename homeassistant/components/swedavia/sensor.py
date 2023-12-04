@@ -110,7 +110,7 @@ async def async_setup_entry(
     )
 
 class SwedaviaFlightandWaitTimeInfoSensor(CoordinatorEntity[SwedaviaDataUpdateCoordinator], SensorEntity):
-    """Implementation of a Swedavia Flight and WaitTime Info Sensor."""
+    """Implementation of a Swedavia FlightInfo and WaitTime Info Sensor."""
 
     _attr_attribution = "Data provided by Swedavia"
     _attr_icon = "mdi:airplane"
@@ -142,7 +142,7 @@ class SwedaviaFlightandWaitTimeInfoSensor(CoordinatorEntity[SwedaviaDataUpdateCo
 
     @property
     def name(self: SwedaviaFlightandWaitTimeInfoSensor) -> str:
-        """Return the name of the sensor."""
+        """Returns the name of the sensor."""
         return self.description.title
 
 
@@ -150,20 +150,23 @@ class SwedaviaFlightandWaitTimeInfoSensor(CoordinatorEntity[SwedaviaDataUpdateCo
     def native_value(
         self: SwedaviaFlightandWaitTimeInfoSensor,
     ) -> str | None:
-        """Return the next departure time."""
+        """Returns the next departure time."""
         return self._state
     @callback
     def _update_attr(self) -> None:
+        """Updates sensor attributes."""
         self._attr_native_value = self.description.value_fn(self.coordinator.data)
         self._state = self.description.value_fn(self.coordinator.data)
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     def _handle_coordinator_update(self) -> None:
+        """Calls for coordinator update with updated attributes."""
         self._update_attr()
         return super()._handle_coordinator_update()
 
 
 def object_to_dict(obj: FlightAndWaitTime) -> dict[Any, Any | list[Any]]:
+    """Add FlightAndWaitTime object data to dict item."""
     result: dict[Any, Any | list[Any]] = dict()
     result["flight_info"] = obj.flight_info.to_dict()
     result["wait_info"] = [i.to_dict() for i in obj.wait_info]

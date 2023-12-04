@@ -32,7 +32,7 @@ class SwedaviaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self,  # noqa: ANN101
         user_input: dict[str, Any] | None = None,
     ) -> FlowResult:
-        """Handle the initial step."""
+        """Setup steps for user config flow, creates entry based on user input. Involves inserts of API keys, home airport, designated flight number and travel date."""
         errors: dict[str, str] = {}
         if user_input is not None:
             api_key_1: str = user_input[CONF_FLIGHTINFO_APIKEY]

@@ -12,14 +12,15 @@ from .const import (
 )
 
 data_schema = vol.Schema(
-            {
-                vol.Required(CONF_FLIGHTINFO_APIKEY): str,
-                vol.Required(CONF_WAIT_TIME_APIKEY): str,
-                vol.Required(CONF_HOMEAIRPORT): str,
-                vol.Required(CONF_FLIGHTNUMBER): str,
-                vol.Required(CONF_DATE): str,
-            }
-        )
+    {
+        vol.Required(CONF_FLIGHTINFO_APIKEY): str,
+        vol.Required(CONF_WAIT_TIME_APIKEY): str,
+        vol.Required(CONF_HOMEAIRPORT): str,
+        vol.Required(CONF_FLIGHTNUMBER): str,
+        vol.Required(CONF_DATE): str,
+    }
+)
+
 
 class SwedaviaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Swedavia integration."""
@@ -27,16 +28,22 @@ class SwedaviaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
 
-    async def async_step_user(self, user_input: dict[str, Any] | None = None
+    async def async_step_user(
+        self,  # noqa: ANN101
+        user_input: dict[str, Any] | None = None,
     ) -> FlowResult:
         """Handle the initial step."""
-        errors = {}
+        errors: dict[str, str] = {}
         if user_input is not None:
             api_key_1: str = user_input[CONF_FLIGHTINFO_APIKEY]
             api_key_2: str = user_input[CONF_WAIT_TIME_APIKEY]
             home_airport: str = user_input[CONF_HOMEAIRPORT]
             flight_number: str = user_input[CONF_FLIGHTNUMBER]
             date: str = user_input[CONF_DATE]
+
+            unique_id = f"{home_airport}-{flight_number}-{date}"
+            await self.async_set_unique_id(unique_id)
+            self._abort_if_unique_id_configured()
             return self.async_create_entry(
                 title="Swedavia",
                 data={
@@ -47,8 +54,6 @@ class SwedaviaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_DATE: date,
                 },
             )
-
-
 
         return self.async_show_form(
             step_id="user", data_schema=data_schema, errors=errors

@@ -26,31 +26,31 @@ Swedavia Integation + Setup
 Contained within this branch is the Swedavia integration created by Group 2. 
 The integration provides information about upcoming flights from Swedavia airports through visualizing it inside of the Home Assistant application.
 
-To be able to use the integration correctly, you need to sign up for free API keys from the `Swedavia Developer Portal <https://developers.home-assistant.io/docs/architecture_index/>`__ before the initial setup in Home Assistant.
+To be able to use the integration correctly, you need to sign up for free API keys from the `Swedavia Developer Portal <https://apideveloper.swedavia.se/>`__ before the initial setup in Home Assistant.
 
 If you are setting up the integration using the configuration.yaml file, navigate to it and configure the following entry:
 
-# Example Swedavia configuration.yaml entry
-sensor:
-  - platform: swedavia
-    flight_info_key: "YOUR_FLIGHTINFO_KEY"
-    wait_time_key: "YOUR_WAITTIME_KEY"
-    flight_number: "LH817"
-    home_airport: "GOT"
-    flight_date: "2023-12-24"
+Example of Swedavia configuration.yaml entry sensor:
+   platform: swedavia
+   flight_info_key: "YOUR_FLIGHTINFO_KEY"
+   wait_time_key: "YOUR_WAITTIME_KEY"
+   flight_number: "LH817"
+   home_airport: "GOT"
+   flight_date: "2023-12-24"
 
 If you are setting up the integration through config flow, follow these steps:
 
 
-    Browse to your Home Assistant instance.
+   - Browse to your Home Assistant instance.
 
-    Go to Settings -> Devices & Services.
+   - Go to Settings -> Devices & Services.
 
-    In the bottom right corner, select the Add Integration button.
+   - In the bottom right corner, select the Add Integration button.
 
-    From the list, select Swedavia.
+   - From the list, select Swedavia.
 
-    Follow the instructions on screen to complete the setup.
+   - Follow the instructions on screen to complete the setup.
+
 
 
 .. |Chat Status| image:: https://img.shields.io/discord/330944238910963714.svg

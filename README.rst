@@ -28,19 +28,7 @@ The integration provides information about upcoming flights from Swedavia airpor
 
 To be able to use the integration correctly, you need to sign up for free API keys from the `Swedavia Developer Portal <https://apideveloper.swedavia.se/>`__ before the initial setup in Home Assistant.
 
-If you are setting up the integration using the configuration.yaml file, navigate to it and configure the following entry:
-
-Example of Swedavia configuration.yaml entry sensor:
-| sensor: 
-|  platform: swedavia
-|  flight_info_key: "YOUR_FLIGHTINFO_KEY"
-|  wait_time_key: "YOUR_WAITTIME_KEY"
-|  flight_number: "LH817"
-|  home_airport: "GOT"
-|  flight_date: "2023-12-24"
-
-
-If you are setting up the integration through config flow, follow these steps:
+To initially set up the integration, follow these steps:
 
 
    - Browse to your Home Assistant instance.
@@ -51,7 +39,7 @@ If you are setting up the integration through config flow, follow these steps:
 
    - From the list, select Swedavia.
 
-   - Follow the instructions on screen to complete the setup.
+   - Follow the instructions on screen to complete the setup - this step requires your API keys.
 
 
 

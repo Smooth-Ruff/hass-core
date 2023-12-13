@@ -1,6 +1,5 @@
 """Dataclasses and associated methods for the Swedavia integration."""
 from dataclasses import dataclass
-from datetime import date
 from typing import Any, List, Optional, TypeVar, Callable, Type, cast
 from datetime import datetime
 import dateutil.parser
@@ -9,20 +8,20 @@ import dateutil.parser
 T = TypeVar("T")
 
 
-def from_str(x: Any) -> str:
+def from_str(x: str) -> str:
     """Returns string from input."""
     #assert isinstance(x, str)
     return x
 
 
-def from_datetime(x: Any) -> datetime:
+def from_datetime(x: datetime) -> datetime:
     """Returns datetime from input, current datetime if input invalid."""
     if not x:
-        return datetime.now()
+        return datetime.now(tz=datetime.UTC)
     return dateutil.parser.parse(x)
 
 
-def from_list(f: Callable[[Any], T], x: Any) -> List[T]:
+def from_list(f: Callable[[Any], T], x: list) -> List[T]:
     """Returns new list based on function f applied on list x, returns empty list if x is None."""
     if x is None:
         return []
@@ -30,26 +29,23 @@ def from_list(f: Callable[[Any], T], x: Any) -> List[T]:
     return [f(y) for y in x]
 
 
-def to_class(c: Type[T], x: Any) -> dict:
+def to_class(c: Type[T], x: Type[T]) -> dict:
     """Returns dict containing objects of class c."""
     assert isinstance(x, c)
     return cast(Any, x).to_dict()
 
 
-def from_none(x: Any) -> Any:
+def from_none(x: None) -> None:
     """Asserts None input."""
     assert x is None
     return x
 
 
-def from_union(fs, x):
+def from_union(fs: list, x: str) -> str:
     """Iterates through functions on x."""
     for f in fs:
-        try:
-            return f(x)
-        except:
-            pass
-    assert False
+        return f(x)
+    raise AssertionError
 
 
 class AirlineOperator:
@@ -58,13 +54,13 @@ class AirlineOperator:
     icao: str
     name: str
 
-    def __init__(self, iata: str, icao: str, name: str) -> None:
+    def __init__(self: Any, iata: str, icao: str, name: str) -> None:
         self.iata = iata
         self.icao = icao
         self.name = name
 
     @staticmethod
-    def from_dict(obj: Any) -> "AirlineOperator":
+    def from_dict(obj: dict) -> "AirlineOperator":
         """Return AirlineOperator object from dict."""
         assert isinstance(obj, dict)
         iata = from_str(obj.get("iata"))
@@ -72,7 +68,7 @@ class AirlineOperator:
         name = from_str(obj.get("name"))
         return AirlineOperator(iata, icao, name)
 
-    def to_dict(self) -> dict:
+    def to_dict(self: dict) -> dict:
         """Add AirlineOperator data to dict item."""
         result: dict = {}
         result["iata"] = from_str(self.iata)
@@ -85,18 +81,16 @@ class Time:
     """Class for UTC time."""
     scheduled_utc: datetime
 
-    def __init__(self, scheduled_utc: datetime) -> None:
+    def __init__(self: Any, scheduled_utc: datetime) -> None:
         self.scheduled_utc = scheduled_utc
 
     @staticmethod
-    def from_dict(obj: Any) -> str:
+    def from_dict(obj: dict) -> str:
         """Return formatted datetime string."""
         assert isinstance(obj, dict)
         scheduled_utc = from_str(obj.get("scheduledUtc"))
-        formatted_string = datetime.strptime(scheduled_utc, "%Y-%m-%dT%H:%M:%SZ").strftime("%Y-%m-%d %H:%M:%S")
-        return formatted_string
-
-    def to_dict(self) -> dict:
+        return datetime.strptime(scheduled_utc, "%Y-%m-%dT%H:%M:%SZ").strftime("%Y-%m-%d %H:%M:%S")
+    def to_dict(self: Any) -> dict:
         """Add schduledUtc to dict item."""
         result: dict = {}
         result["scheduledUtc"] = self.scheduled_utc.isoformat()
@@ -108,17 +102,17 @@ class Baggage:
     pass
 
     def __init__(
-        self,
+        self: any,
     ) -> None:
         pass
 
     @staticmethod
-    def from_dict(obj: Any) -> "Baggage":
+    def from_dict(obj: dict) -> "Baggage":
         """Returns Baggage object."""
         assert isinstance(obj, dict)
         return Baggage()
 
-    def to_dict(self) -> dict:
+    def to_dict(self: any) -> dict:
         """Add Baggage to dict item."""
         result: dict = {}
         return result
@@ -135,7 +129,7 @@ class FlightLegIdentifier:
     arrival_airport_icao: str
 
     def __init__(
-        self,
+        self: any,
         callsign: str,
         flight_id: str,
         flight_departure_date_utc: datetime,
@@ -153,7 +147,7 @@ class FlightLegIdentifier:
         self.arrival_airport_icao = arrival_airport_icao
 
     @staticmethod
-    def from_dict(obj: Any) -> "FlightLegIdentifier":
+    def from_dict(obj: dict) -> "FlightLegIdentifier":
         """Returns FlightLegIdentifier object."""
         assert isinstance(obj, dict)
         callsign = from_str(obj.get("callsign"))
@@ -173,7 +167,7 @@ class FlightLegIdentifier:
             arrival_airport_icao,
         )
 
-    def to_dict(self) -> dict:
+    def to_dict(self: any) -> dict:
         """Add FlightLegIdentifier data to dict item."""
         result: dict = {}
         result["callsign"] = from_str(self.callsign)
@@ -194,7 +188,7 @@ class LocationAndStatus:
     flight_leg_status_english: str
 
     def __init__(
-        self,
+        self: any,
         terminal: str,
         flight_leg_status: str,
         flight_leg_status_swedish: str,
@@ -206,7 +200,7 @@ class LocationAndStatus:
         self.flight_leg_status_english = flight_leg_status_english
 
     @staticmethod
-    def from_dict(obj: Any) -> "LocationAndStatus":
+    def from_dict(obj: dict) -> "LocationAndStatus":
         """Returns LocationAndStatus object."""
         assert isinstance(obj, dict)
         terminal = from_str(obj.get("terminal"))
@@ -220,7 +214,7 @@ class LocationAndStatus:
             flight_leg_status_english,
         )
 
-    def to_dict(self) -> dict:
+    def to_dict(self: any) -> dict:
         """Add LocationAndStatus data to dict item."""
         result: dict = {}
         result["terminal"] = from_str(self.terminal)
@@ -247,7 +241,7 @@ class Arrival:
     di_indicator: str
 
     def __init__(
-        self,
+        self: any,
         flight_id: str,
         departure_airport_swedish: str,
         departure_airport_english: str,
@@ -277,7 +271,7 @@ class Arrival:
         self.di_indicator = di_indicator
 
     @staticmethod
-    def from_dict(obj: Any) -> "Arrival":
+    def from_dict(obj: dict) -> "Arrival":
         """Returns Arrival object."""
         assert isinstance(obj, dict)
         flight_id = from_str(obj.get("flightId"))
@@ -311,7 +305,7 @@ class Arrival:
             di_indicator,
         )
 
-    def to_dict(self) -> dict:
+    def to_dict(self: any) -> dict:
         """Add Arrival data to dict item."""
         result: dict = {}
         result["flightId"] = from_str(self.flight_id)
@@ -351,7 +345,7 @@ class Departure:
     di_indicator: str
 
     def __init__(
-        self,
+        self: any,
         flight_id: str,
         arrival_airport_swedish: str,
         arrival_airport_english: str,
@@ -381,7 +375,7 @@ class Departure:
         self.di_indicator = di_indicator
 
     @staticmethod
-    def from_dict(obj: Any):
+    def from_dict(obj: dict) -> ["Departure"]:
         """Returns list of updated departing flights."""
         assert isinstance(obj, dict)
         departures_dict = obj.get("flights", [])
@@ -393,7 +387,7 @@ class Departure:
                 arrival_airport_swedish=from_str(flight_data.get("arrivalAirportSwedish")),
                 arrival_airport_english=from_str(flight_data.get("arrivalAirportEnglish")),
                 airline_operator=AirlineOperator.from_dict(flight_data.get("airlineOperator", {})),
-                departure_time=Time.from_dict(flight_data.get("departureTime")) if "departureTime" in flight_data else datetime.now(),
+                departure_time=Time.from_dict(flight_data.get("departureTime")) if "departureTime" in flight_data else datetime.now(tz=datetime.UTC),
                 location_and_status=LocationAndStatus.from_dict(flight_data.get("locationAndStatus", {})),
                 check_in=Baggage.from_dict(flight_data.get("checkIn", {})),
                 code_share_data=from_list(lambda x: x, flight_data.get("codeShareData", [])),
@@ -407,7 +401,7 @@ class Departure:
 
         return flight_arr
 
-    def to_dict(self) -> dict:
+    def to_dict(self: any) -> dict:
         """Add Departure data to dict item."""
         result: dict = {}
         result["flightId"] = from_str(self.flight_id)
@@ -436,20 +430,20 @@ class Flight:
     arrival: Optional[Arrival]
 
     def __init__(
-        self, departure: Optional[Departure], arrival: Optional[Arrival]
+        self: any, departure: Optional[Departure], arrival: Optional[Arrival]
     ) -> None:
         self.departure = departure
         self.arrival = arrival
 
     @staticmethod
-    def from_dict(obj: Any) -> "Flight":
+    def from_dict(obj: dict) -> "Flight":
         """Returns Flight object based on data from Departure and Arrival classes."""
         assert isinstance(obj, dict)
         departure = from_union([Departure.from_dict, from_none], obj.get("departure"))
         arrival = from_union([Arrival.from_dict, from_none], obj.get("arrival"))
         return Flight(departure, arrival)
 
-    def to_dict(self) -> dict:
+    def to_dict(self: any) -> dict:
         """Add Flight data to dict item."""
         result: dict = {}
         if self.departure is not None:
@@ -468,19 +462,19 @@ class FlightInfo:
     flights: List[Flight]
     continuationtoken: str
 
-    def __init__(self, flights: List[Flight], continuationtoken: str) -> None:
+    def __init__(self: any, flights: List[Flight], continuationtoken: str) -> None:
         self.flights = flights
         self.continuationtoken = continuationtoken
 
     @staticmethod
-    def from_dict(obj: Any) -> "FlightInfo":
+    def from_dict(obj: dict) -> "FlightInfo":
         """Returns FlightInfo object."""
         assert isinstance(obj, dict)
         flights = from_list(Flight.from_dict, obj.get("flights"))
         continuationtoken = from_str(obj.get("continuationtoken"))
         return FlightInfo(flights, continuationtoken)
 
-    def to_dict(self) -> dict:
+    def to_dict(self: any) -> dict:
         """Add FlightInfo data to dict item."""
         result: dict = {}
         result["flights"] = from_list(lambda x: to_class(Flight, x), self.flights)
@@ -488,11 +482,11 @@ class FlightInfo:
         return result
 
 
-def flight_info_from_dict(s: Any) -> FlightInfo:
+def flight_info_from_dict(s: dict) -> FlightInfo:
     return FlightInfo.from_dict(s)
 
 
-def flight_info_to_dict(x: FlightInfo) -> Any:
+def flight_info_to_dict(x: FlightInfo) -> dict:
     return to_class(FlightInfo, x)
 
 
@@ -510,7 +504,7 @@ class WaitTime:
     overflow: bool
 
     def __init__(
-        self,
+        self: any,
         id_: str,
         queue_name: str,
         current_time: datetime,
@@ -546,7 +540,7 @@ class WaitTime:
             d.get("overflow"),
         )
 
-    def to_dict(self) -> dict:
+    def to_dict(self: any) -> dict:
         """Return WaitTime data as dict item."""
         return {
             "id": self.id_,
@@ -567,19 +561,19 @@ class FlightAndWaitTime:
     flight_info: List[Departure]  # Change the type to a list of Departure
     wait_info: List[WaitTime]
 
-    def __init__(self, flight_info: List[Departure], wait_info: List[WaitTime]) -> None:
+    def __init__(self: any, flight_info: List[Departure], wait_info: List[WaitTime]) -> None:
         self.flight_info = flight_info
         self.wait_info = wait_info
 
     @staticmethod
-    def from_dict(obj: Any) -> "FlightAndWaitTime":
+    def from_dict(obj: dict) -> "FlightAndWaitTime":
         """Returns FlightAndWaitTime object."""
         assert isinstance(obj, dict)
         flight_info = from_list(Departure.from_dict, obj.get("flight_info"))
         wait_info = from_list(WaitTime.from_dict, obj.get("wait_info"))
         return FlightAndWaitTime(flight_info, wait_info)
 
-    def to_dict(self) -> dict:
+    def to_dict(self: any) -> dict:
         """Add FlightAndWaitTime data to dict item."""
         result: dict = {}
         result["flight_info"] = from_list(lambda x: to_class(Departure, x), self.flight_info)

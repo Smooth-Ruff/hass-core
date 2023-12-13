@@ -1,12 +1,8 @@
-from asyncio import sleep
-from datetime import timedelta
-import time
 import aiohttp
 
+from typing import Any
+from .flight_data import Departure, WaitTime
 
-from homeassistant.core import HomeAssistant
-from .flight_data import Departure, FlightInfo, WaitTime
-from .const import MOCK_FLIGHTINFO
 
 class SwedaviaWrapper:
     """Class used to communicate with Swedavia API."""
@@ -17,7 +13,7 @@ class SwedaviaWrapper:
 
 
     def __init__(
-        self,
+        self: Any,
         client_session: aiohttp.ClientSession,
         flight_info_api_key: str,
         wait_time_api_key: str,
@@ -27,17 +23,14 @@ class SwedaviaWrapper:
         self.wait_time_api_key = wait_time_api_key
 
     async def async_get_client_session(
-        self, hass: HomeAssistant, verify_ssl=True
+        self: Any
     ) -> aiohttp.ClientSession:
         return self.client_session
 
     async def async_get_flight_info(
-        self, airport: str, flight_number: str, date: str
+        self: Any, airport: str, date: str
     ) -> Departure:
         """Fetches Swedavia FlightInfo API data through query call based on config entries."""
-        base_url = "https://api.swedavia.se/flightinfo/v2/query"
-        flight_type = 'D'
-        filter_params = f"airport eq '{airport}' and scheduled eq '{date}' and flightType eq '{flight_type}' and flightId eq '{flight_number}'"
         url = f"https://api.swedavia.se/flightinfo/v2/{airport}/departures/{date}"
 
         headers = {
@@ -51,13 +44,13 @@ class SwedaviaWrapper:
                 data = await response.json()
                 return  Departure.from_dict(data)
 
-            else:
-                raise Exception(
-                    f"Failed to fetch flight info. Status code: {response.status}"
-                )
+
+            raise Exception(
+                f"Failed to fetch flight info. Status code: {response.status}"
+            )
 
     async def async_get_wait_time(
-        self, airport: str, flight_number: str, date: str
+        self: Any, airport: str, flight_number: str, date: str
     ) -> [WaitTime]:
         """Fetches Swedavia WaitTime API data through call based on config entries."""
         url = f"https://api.swedavia.se/waittimepublic/v2/airports/{airport}/flights?flightid={flight_number}&date={date}"
@@ -72,21 +65,21 @@ class SwedaviaWrapper:
             if response.status == 200:
                 data = await response.json()
                 return [WaitTime.from_dict(wait_time) for wait_time in data.get("waitTimes")]
-            else:
-                raise Exception(f"Failed to fetch wait times. Status code: {response.status}")
+
+            raise Exception(f"Failed to fetch wait times. Status code: {response.status}")
 
 
-class InvalidWaitTimeKey(Exception):
+class InvalidWaitTimeKeyError(Exception):
     pass
 
 
-class InvalidFlightInfoKey(Exception):
+class InvalidFlightInfoKeyError(Exception):
     pass
 
 
-class InvalidtFlightNumber(Exception):
+class InvalidtFlightNumberError(Exception):
     pass
 
 
-class InvalidAirport(Exception):
+class InvalidAirportError(Exception):
     pass

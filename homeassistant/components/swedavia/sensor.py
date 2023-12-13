@@ -7,33 +7,28 @@ import logging
 
 from attr import dataclass
 
-from homeassistant.components.sensor.const import SensorDeviceClass
-from homeassistant.const import CONF_NAME
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 
 from .coordinator import SwedaviaDataUpdateCoordinator
-import voluptuous as vol
 
-from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorEntity, SensorEntityDescription
+
+from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
 from homeassistant.core import HomeAssistant, callback
 from typing import Any, Callable
-from collections.abc import Mapping
-import homeassistant.helpers.config_validation as cv
+
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType, StateType
+from homeassistant.helpers.typing import StateType
 from homeassistant.util import Throttle
-from .flight_data import FlightAndWaitTime, Departure
+from .flight_data import FlightAndWaitTime
 from homeassistant.config_entries import ConfigEntry
-from .flight_data import FlightInfo, WaitTime
+from .flight_data import WaitTime
 
 
 from .const import (
-    CONF_FLIGHTINFO_APIKEY,
     CONF_FLIGHTNUMBER,
     CONF_HOMEAIRPORT,
-    CONF_WAIT_TIME_APIKEY,
     CONF_DATE,
 )
 
@@ -117,7 +112,7 @@ class SwedaviaFlightandWaitTimeInfoSensor(CoordinatorEntity[SwedaviaDataUpdateCo
     _state = "Placeholder state"
 
     def __init__(
-        self,
+        self: any,
         coordinator: SwedaviaDataUpdateCoordinator,
         flight_number: str,
         airport: str,
@@ -153,13 +148,13 @@ class SwedaviaFlightandWaitTimeInfoSensor(CoordinatorEntity[SwedaviaDataUpdateCo
         """Returns the next departure time."""
         return self._state
     @callback
-    def _update_attr(self) -> None:
+    def _update_attr(self: Any) -> None:
         """Updates sensor attributes."""
         self._attr_native_value = self.description.value_fn(self.coordinator.data)
         self._state = self.description.value_fn(self.coordinator.data)
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
-    def _handle_coordinator_update(self) -> None:
+    def _handle_coordinator_update(self: Any) -> None:
         """Calls for coordinator update with updated attributes."""
         self._update_attr()
         return super()._handle_coordinator_update()

@@ -21,10 +21,10 @@ from .const import (
 from .coordinator import SwedaviaDataUpdateCoordinator
 from .swedavia_wrapper import (
     SwedaviaWrapper,
-    InvalidAirport,
-    InvalidFlightInfoKey,
-    InvalidtFlightNumber,
-    InvalidWaitTimeKey,
+    InvalidAirportError,
+    InvalidFlightInfoKeyError,
+    InvalidtFlightNumberError,
+    InvalidWaitTimeKeyError,
 )
 
 
@@ -41,7 +41,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     try:
         await swedavia_api.async_get_flight_info(
             airport=entry.data[CONF_HOMEAIRPORT],
-            flight_number=entry.data[CONF_FLIGHTNUMBER],
             date=entry.data[CONF_DATE],
         )
         await swedavia_api.async_get_wait_time(
@@ -49,9 +48,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             flight_number=entry.data[CONF_FLIGHTNUMBER],
             date=entry.data[CONF_DATE],
         )
-    except (InvalidFlightInfoKey, InvalidWaitTimeKey) as error:
+    except (InvalidFlightInfoKeyError, InvalidWaitTimeKeyError) as error:
         raise ConfigEntryAuthFailed from error
-    except (InvalidtFlightNumber, InvalidAirport) as error:
+    except (InvalidtFlightNumberError, InvalidAirportError) as error:
         raise ConfigEntryNotReady(
             f"Problem when looking up flight {entry.data[CONF_FLIGHTNUMBER]} from"
             f" {entry.data[CONF_HOMEAIRPORT]}. Error: {error} "

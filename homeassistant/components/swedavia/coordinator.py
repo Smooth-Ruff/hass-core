@@ -4,7 +4,6 @@ from __future__ import annotations
 from datetime import timedelta
 import logging
 
-import asyncio
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -14,13 +13,13 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .const import DOMAIN, CONF_WAIT_TIME_APIKEY, CONF_FLIGHTINFO_APIKEY
 from .util import fill_date
-from .flight_data import Departure, FlightAndWaitTime, WaitTime, FlightInfo
+from .flight_data import Departure, FlightAndWaitTime, WaitTime
 from .swedavia_wrapper import (
     SwedaviaWrapper,
-    InvalidAirport,
-    InvalidFlightInfoKey,
-    InvalidtFlightNumber,
-    InvalidWaitTimeKey,
+    InvalidAirportError,
+    InvalidFlightInfoKeyError,
+    InvalidtFlightNumberError,
+    InvalidWaitTimeKeyError,
 )
 
 
@@ -66,7 +65,6 @@ class SwedaviaDataUpdateCoordinator(DataUpdateCoordinator[FlightAndWaitTime]):
             flight_info_state: Departure = (
                 await self._swedavia_api.async_get_flight_info(
                     airport=self.airport,
-                    flight_number=self.flight_number,
                     date=self._date,
                 )
             )
@@ -79,9 +77,9 @@ class SwedaviaDataUpdateCoordinator(DataUpdateCoordinator[FlightAndWaitTime]):
                 date=self._date,
             )
 
-        except (InvalidFlightInfoKey, InvalidWaitTimeKey) as error:
+        except (InvalidFlightInfoKeyError, InvalidWaitTimeKeyError) as error:
             raise ConfigEntryAuthFailed from error
-        except (InvalidtFlightNumber, InvalidAirport) as error:
+        except (InvalidtFlightNumberError, InvalidAirportError) as error:
             raise UpdateFailed(
                 f" Error fetching information related to flight {self.flight_number} from {self.airport}: {error}"
             ) from error

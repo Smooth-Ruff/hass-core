@@ -16,14 +16,14 @@ from .coordinator import SwedaviaDataUpdateCoordinator
 
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
 from homeassistant.core import HomeAssistant, callback
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
 from homeassistant.util import Throttle
 from .flight_data import FlightAndWaitTime
 from homeassistant.config_entries import ConfigEntry
-from .flight_data import WaitTime
 
 
 from .const import (
@@ -47,43 +47,44 @@ DEFAULT_DELAY = 0
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=10)
 
+
 @dataclass
 class SWRequiredKeysMixin:
     """Mixin for required keys."""
-    key : str
+
+    key: str
     title: str
     icon: str
-    value_fn: Callable[[WaitTime], StateType | datetime]
+    value_fn: Callable[[FlightAndWaitTime], StateType | datetime]
+
 
 @dataclass
-class SWSensorEntityDescription(
-    SensorEntityDescription, SWRequiredKeysMixin
-):
+class SWSensorEntityDescription(SensorEntityDescription, SWRequiredKeysMixin):
     """Describes Swedavia sensor entity."""
 
 
 SENSOR_TYPES: tuple[SWSensorEntityDescription, ...] = (
     SWSensorEntityDescription(
-        key = "wait_time",
-        title = "Projected Wait Time",
+        key="wait_time",
+        title="Projected Wait Time",
         icon="mdi:airplane-clock",
         value_fn=lambda data: data.wait_info[0].current_projected_wait_time,
     ),
     SWSensorEntityDescription(
-        key = "current_time",
-        title = "Current Time",
+        key="current_time",
+        title="Current Time",
         icon="mdi:clock",
         value_fn=lambda data: data.wait_info[0].current_time,
     ),
     SWSensorEntityDescription(
-        key = "flight_id",
-        title = "Flight ID",
+        key="flight_id",
+        title="Flight ID",
         icon="mdi:airplane",
         value_fn=lambda data: data.flight_info[0].flight_id,
     ),
     SWSensorEntityDescription(
-        key = "departure_time",
-        title = "Departure Time",
+        key="departure_time",
+        title="Departure Time",
         icon="mdi:airplane",
         value_fn=lambda data: data.flight_info[0].departure_time,
     ),
@@ -99,12 +100,22 @@ async def async_setup_entry(
 
     async_add_entities(
         [
-            SwedaviaFlightandWaitTimeInfoSensor(coordinator, entry.data[CONF_FLIGHTNUMBER], entry.data[CONF_HOMEAIRPORT], entry.entry_id, entry.data[CONF_DATE], description)
+            SwedaviaFlightandWaitTimeInfoSensor(
+                coordinator,
+                entry.data[CONF_FLIGHTNUMBER],
+                entry.data[CONF_HOMEAIRPORT],
+                entry.entry_id,
+                entry.data[CONF_DATE],
+                description,
+            )
             for description in SENSOR_TYPES
         ]
     )
 
-class SwedaviaFlightandWaitTimeInfoSensor(CoordinatorEntity[SwedaviaDataUpdateCoordinator], SensorEntity):
+
+class SwedaviaFlightandWaitTimeInfoSensor(
+    CoordinatorEntity[SwedaviaDataUpdateCoordinator], SensorEntity
+):
     """Implementation of a Swedavia FlightInfo and WaitTime Info Sensor."""
 
     _attr_attribution = "Data provided by Swedavia"
@@ -112,7 +123,7 @@ class SwedaviaFlightandWaitTimeInfoSensor(CoordinatorEntity[SwedaviaDataUpdateCo
     _state = "Placeholder state"
 
     def __init__(
-        self: any,
+        self: Any,
         coordinator: SwedaviaDataUpdateCoordinator,
         flight_number: str,
         airport: str,
@@ -140,13 +151,13 @@ class SwedaviaFlightandWaitTimeInfoSensor(CoordinatorEntity[SwedaviaDataUpdateCo
         """Returns the name of the sensor."""
         return self.description.title
 
-
     @property
     def native_value(
         self: SwedaviaFlightandWaitTimeInfoSensor,
     ) -> str | None:
         """Returns the next departure time."""
         return self._state
+
     @callback
     def _update_attr(self: Any) -> None:
         """Updates sensor attributes."""
@@ -163,6 +174,6 @@ class SwedaviaFlightandWaitTimeInfoSensor(CoordinatorEntity[SwedaviaDataUpdateCo
 def object_to_dict(obj: FlightAndWaitTime) -> dict[Any, Any | list[Any]]:
     """Add FlightAndWaitTime object data to dict item."""
     result: dict[Any, Any | list[Any]] = dict()
-    result["flight_info"] = obj.flight_info.to_dict()
+    result["flight_info"] = [i.to_dict() for i in obj.flight_info]
     result["wait_info"] = [i.to_dict() for i in obj.wait_info]
     return result

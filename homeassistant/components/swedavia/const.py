@@ -15,3 +15,5 @@ CONF_HOMEAIRPORT = "home_airport"
 CONF_FLIGHTINFO_APIKEY = "flight_info_key"
 CONF_WAIT_TIME_APIKEY = "wait_time_key"
 CONF_DATE = "flight_date"
+
+OK_HTTP = 200

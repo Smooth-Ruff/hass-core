@@ -2,6 +2,7 @@ import aiohttp
 
 from typing import Any
 from .flight_data import Departure, WaitTime
+from .const import OK_HTTP
 
 
 class SwedaviaWrapper:
@@ -10,7 +11,6 @@ class SwedaviaWrapper:
     client_session: aiohttp.ClientSession
     flight_info_api_key: str
     wait_time_api_key: str
-
 
     def __init__(
         self: Any,
@@ -22,14 +22,12 @@ class SwedaviaWrapper:
         self.flight_info_api_key = flight_info_api_key
         self.wait_time_api_key = wait_time_api_key
 
-    async def async_get_client_session(
-        self: Any
-    ) -> aiohttp.ClientSession:
+    async def async_get_client_session(self: Any) -> aiohttp.ClientSession:
         return self.client_session
 
     async def async_get_flight_info(
         self: Any, airport: str, date: str
-    ) -> Departure:
+    ) -> list[Departure]:
         """Fetches Swedavia FlightInfo API data through query call based on config entries."""
         url = f"https://api.swedavia.se/flightinfo/v2/{airport}/departures/{date}"
 
@@ -40,33 +38,36 @@ class SwedaviaWrapper:
         }
 
         async with self.client_session.get(url, headers=headers) as response:
-            if response.status == 200:
+            if response.status == OK_HTTP:
                 data = await response.json()
-                return  Departure.from_dict(data)
+                return Departure.from_dict(data)
 
-
-            raise Exception(
+            raise ValueError(
                 f"Failed to fetch flight info. Status code: {response.status}"
             )
 
     async def async_get_wait_time(
         self: Any, airport: str, flight_number: str, date: str
-    ) -> [WaitTime]:
+    ) -> list[WaitTime]:
         """Fetches Swedavia WaitTime API data through call based on config entries."""
         url = f"https://api.swedavia.se/waittimepublic/v2/airports/{airport}/flights?flightid={flight_number}&date={date}"
 
         headers = {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache',
-            'Ocp-Apim-Subscription-Key': self.wait_time_api_key,
+            "Accept": "application/json",
+            "Cache-Control": "no-cache",
+            "Ocp-Apim-Subscription-Key": self.wait_time_api_key,
         }
 
         async with self.client_session.get(url, headers=headers) as response:
-            if response.status == 200:
+            if response.status == OK_HTTP:
                 data = await response.json()
-                return [WaitTime.from_dict(wait_time) for wait_time in data.get("waitTimes")]
+                return [
+                    WaitTime.from_dict(wait_time) for wait_time in data.get("waitTimes")
+                ]
 
-            raise Exception(f"Failed to fetch wait times. Status code: {response.status}")
+            raise ValueError(
+                f"Failed to fetch wait times. Status code: {response.status}"
+            )
 
 
 class InvalidWaitTimeKeyError(Exception):

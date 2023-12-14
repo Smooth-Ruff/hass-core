@@ -62,11 +62,11 @@ class SwedaviaDataUpdateCoordinator(DataUpdateCoordinator[FlightAndWaitTime]):
     ) -> FlightAndWaitTime:
         """Fetch data from Swedavia API."""
         try:
-            flight_info_state: Departure = (
-                await self._swedavia_api.async_get_flight_info(
-                    airport=self.airport,
-                    date=self._date,
-                )
+            flight_info_state: list[
+                Departure
+            ] = await self._swedavia_api.async_get_flight_info(
+                airport=self.airport,
+                date=self._date,
             )
 
             wait_time_state: list[

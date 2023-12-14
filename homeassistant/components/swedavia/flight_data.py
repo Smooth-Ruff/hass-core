@@ -1,8 +1,10 @@
 """Dataclasses and associated methods for the Swedavia integration."""
 from dataclasses import dataclass
-from typing import Any, List, Optional, TypeVar, Callable, Type, cast
+from typing import Any, Optional, TypeVar, cast
 from datetime import datetime
 import dateutil.parser
+import pytz
+from collections.abc import Callable
 
 
 T = TypeVar("T")
@@ -10,7 +12,7 @@ T = TypeVar("T")
 
 def from_str(x: str) -> str:
     """Returns string from input."""
-    #assert isinstance(x, str)
+    # assert isinstance(x, str)
     return x
 
 
@@ -21,7 +23,7 @@ def from_datetime(x: datetime) -> datetime:
     return dateutil.parser.parse(x)
 
 
-def from_list(f: Callable[[Any], T], x: list) -> List[T]:
+def from_list(f: Callable[[Any], T], x: list) -> list[T]:
     """Returns new list based on function f applied on list x, returns empty list if x is None."""
     if x is None:
         return []
@@ -29,7 +31,7 @@ def from_list(f: Callable[[Any], T], x: list) -> List[T]:
     return [f(y) for y in x]
 
 
-def to_class(c: Type[T], x: Type[T]) -> dict:
+def to_class(c: type[T], x: type[T]) -> dict:
     """Returns dict containing objects of class c."""
     assert isinstance(x, c)
     return cast(Any, x).to_dict()
@@ -50,6 +52,7 @@ def from_union(fs: list, x: str) -> str:
 
 class AirlineOperator:
     """Class for Swedavia airline operators and helper methods."""
+
     iata: str
     icao: str
     name: str
@@ -79,6 +82,7 @@ class AirlineOperator:
 
 class Time:
     """Class for UTC time."""
+
     scheduled_utc: datetime
 
     def __init__(self: Any, scheduled_utc: datetime) -> None:
@@ -89,7 +93,12 @@ class Time:
         """Return formatted datetime string."""
         assert isinstance(obj, dict)
         scheduled_utc = from_str(obj.get("scheduledUtc"))
-        return datetime.strptime(scheduled_utc, "%Y-%m-%dT%H:%M:%SZ").strftime("%Y-%m-%d %H:%M:%S")
+        return (
+            datetime.strptime(scheduled_utc, "%Y-%m-%dT%H:%M:%SZ")
+            .astimezone(pytz.timezone("CET"))
+            .strftime("%Y-%m-%d %H:%M:%S")
+        )
+
     def to_dict(self: Any) -> dict:
         """Add schduledUtc to dict item."""
         result: dict = {}
@@ -99,10 +108,9 @@ class Time:
 
 class Baggage:
     """Class for Swedavia Baggage."""
-    pass
 
     def __init__(
-        self: any,
+        self: Any,
     ) -> None:
         pass
 
@@ -112,7 +120,7 @@ class Baggage:
         assert isinstance(obj, dict)
         return Baggage()
 
-    def to_dict(self: any) -> dict:
+    def to_dict(self: Any) -> dict:
         """Add Baggage to dict item."""
         result: dict = {}
         return result
@@ -120,6 +128,7 @@ class Baggage:
 
 class FlightLegIdentifier:
     """Class for Swedavia Flight Information."""
+
     callsign: str
     flight_id: str
     flight_departure_date_utc: datetime
@@ -129,7 +138,7 @@ class FlightLegIdentifier:
     arrival_airport_icao: str
 
     def __init__(
-        self: any,
+        self: Any,
         callsign: str,
         flight_id: str,
         flight_departure_date_utc: datetime,
@@ -167,7 +176,7 @@ class FlightLegIdentifier:
             arrival_airport_icao,
         )
 
-    def to_dict(self: any) -> dict:
+    def to_dict(self: Any) -> dict:
         """Add FlightLegIdentifier data to dict item."""
         result: dict = {}
         result["callsign"] = from_str(self.callsign)
@@ -182,13 +191,14 @@ class FlightLegIdentifier:
 
 class LocationAndStatus:
     """Class for Swedavia Airport Information."""
+
     terminal: str
     flight_leg_status: str
     flight_leg_status_swedish: str
     flight_leg_status_english: str
 
     def __init__(
-        self: any,
+        self: Any,
         terminal: str,
         flight_leg_status: str,
         flight_leg_status_swedish: str,
@@ -214,7 +224,7 @@ class LocationAndStatus:
             flight_leg_status_english,
         )
 
-    def to_dict(self: any) -> dict:
+    def to_dict(self: Any) -> dict:
         """Add LocationAndStatus data to dict item."""
         result: dict = {}
         result["terminal"] = from_str(self.terminal)
@@ -226,6 +236,7 @@ class LocationAndStatus:
 
 class Arrival:
     """Class for Swedavia Flight Arrival Information."""
+
     flight_id: str
     departure_airport_swedish: str
     departure_airport_english: str
@@ -233,15 +244,15 @@ class Arrival:
     arrival_time: Time
     location_and_status: LocationAndStatus
     baggage: Baggage
-    code_share_data: List[Any]
+    code_share_data: list[Any]
     flight_leg_identifier: FlightLegIdentifier
-    remarks_english: List[Any]
-    remarks_swedish: List[Any]
-    via_destinations: List[Any]
+    remarks_english: list[Any]
+    remarks_swedish: list[Any]
+    via_destinations: list[Any]
     di_indicator: str
 
     def __init__(
-        self: any,
+        self: Any,
         flight_id: str,
         departure_airport_swedish: str,
         departure_airport_english: str,
@@ -249,11 +260,11 @@ class Arrival:
         arrival_time: Time,
         location_and_status: LocationAndStatus,
         baggage: Baggage,
-        code_share_data: List[Any],
+        code_share_data: list[Any],
         flight_leg_identifier: FlightLegIdentifier,
-        remarks_english: List[Any],
-        remarks_swedish: List[Any],
-        via_destinations: List[Any],
+        remarks_english: list[Any],
+        remarks_swedish: list[Any],
+        via_destinations: list[Any],
         di_indicator: str,
     ) -> None:
         self.flight_id = flight_id
@@ -305,7 +316,7 @@ class Arrival:
             di_indicator,
         )
 
-    def to_dict(self: any) -> dict:
+    def to_dict(self: Any) -> dict:
         """Add Arrival data to dict item."""
         result: dict = {}
         result["flightId"] = from_str(self.flight_id)
@@ -327,25 +338,27 @@ class Arrival:
         result["diIndicator"] = from_str(self.di_indicator)
         return result
 
+
 @dataclass
 class Departure:
     """Class for Swedavia Flight Departure Information."""
+
     flight_id: str
     arrival_airport_swedish: str
     arrival_airport_english: str
     airline_operator: AirlineOperator
-    departure_time: Time
+    departure_time: datetime
     location_and_status: LocationAndStatus
     check_in: Baggage
-    code_share_data: List[Any]
+    code_share_data: list[Any]
     flight_leg_identifier: FlightLegIdentifier
-    via_destinations: List[Any]
-    remarks_english: List[Any]
-    remarks_swedish: List[Any]
+    via_destinations: list[Any]
+    remarks_english: list[Any]
+    remarks_swedish: list[Any]
     di_indicator: str
 
     def __init__(
-        self: any,
+        self: Any,
         flight_id: str,
         arrival_airport_swedish: str,
         arrival_airport_english: str,
@@ -353,11 +366,11 @@ class Departure:
         departure_time: datetime,
         location_and_status: LocationAndStatus,
         check_in: Baggage,
-        code_share_data: List[Any],
+        code_share_data: list[Any],
         flight_leg_identifier: FlightLegIdentifier,
-        via_destinations: List[Any],
-        remarks_english: List[Any],
-        remarks_swedish: List[Any],
+        via_destinations: list[Any],
+        remarks_english: list[Any],
+        remarks_swedish: list[Any],
         di_indicator: str,
     ) -> None:
         self.flight_id = flight_id
@@ -384,24 +397,44 @@ class Departure:
         for flight_data in departures_dict:
             flight = Departure(
                 flight_id=from_str(flight_data.get("flightId")),
-                arrival_airport_swedish=from_str(flight_data.get("arrivalAirportSwedish")),
-                arrival_airport_english=from_str(flight_data.get("arrivalAirportEnglish")),
-                airline_operator=AirlineOperator.from_dict(flight_data.get("airlineOperator", {})),
-                departure_time=Time.from_dict(flight_data.get("departureTime")) if "departureTime" in flight_data else datetime.now(tz=datetime.UTC),
-                location_and_status=LocationAndStatus.from_dict(flight_data.get("locationAndStatus", {})),
+                arrival_airport_swedish=from_str(
+                    flight_data.get("arrivalAirportSwedish")
+                ),
+                arrival_airport_english=from_str(
+                    flight_data.get("arrivalAirportEnglish")
+                ),
+                airline_operator=AirlineOperator.from_dict(
+                    flight_data.get("airlineOperator", {})
+                ),
+                departure_time=Time.from_dict(flight_data.get("departureTime"))
+                if "departureTime" in flight_data
+                else datetime.now(tz=datetime.UTC),
+                location_and_status=LocationAndStatus.from_dict(
+                    flight_data.get("locationAndStatus", {})
+                ),
                 check_in=Baggage.from_dict(flight_data.get("checkIn", {})),
-                code_share_data=from_list(lambda x: x, flight_data.get("codeShareData", [])),
-                flight_leg_identifier=FlightLegIdentifier.from_dict(flight_data.get("flightLegIdentifier", {})),
-                via_destinations=from_list(lambda x: x, flight_data.get("viaDestinations", [])),
-                remarks_english=from_list(lambda x: x, flight_data.get("remarksEnglish", [])),
-                remarks_swedish=from_list(lambda x: x, flight_data.get("remarksSwedish", [])),
-                di_indicator=from_str(flight_data.get("diIndicator", {}))
+                code_share_data=from_list(
+                    lambda x: x, flight_data.get("codeShareData", [])
+                ),
+                flight_leg_identifier=FlightLegIdentifier.from_dict(
+                    flight_data.get("flightLegIdentifier", {})
+                ),
+                via_destinations=from_list(
+                    lambda x: x, flight_data.get("viaDestinations", [])
+                ),
+                remarks_english=from_list(
+                    lambda x: x, flight_data.get("remarksEnglish", [])
+                ),
+                remarks_swedish=from_list(
+                    lambda x: x, flight_data.get("remarksSwedish", [])
+                ),
+                di_indicator=from_str(flight_data.get("diIndicator", {})),
             )
             flight_arr.append(flight)
 
         return flight_arr
 
-    def to_dict(self: any) -> dict:
+    def to_dict(self: Any) -> dict:
         """Add Departure data to dict item."""
         result: dict = {}
         result["flightId"] = from_str(self.flight_id)
@@ -426,11 +459,12 @@ class Departure:
 
 class Flight:
     """Class for a Swedavia Flight."""
+
     departure: Optional[Departure]
     arrival: Optional[Arrival]
 
     def __init__(
-        self: any, departure: Optional[Departure], arrival: Optional[Arrival]
+        self: Any, departure: Optional[Departure], arrival: Optional[Arrival]
     ) -> None:
         self.departure = departure
         self.arrival = arrival
@@ -443,7 +477,7 @@ class Flight:
         arrival = from_union([Arrival.from_dict, from_none], obj.get("arrival"))
         return Flight(departure, arrival)
 
-    def to_dict(self: any) -> dict:
+    def to_dict(self: Any) -> dict:
         """Add Flight data to dict item."""
         result: dict = {}
         if self.departure is not None:
@@ -456,13 +490,15 @@ class Flight:
             )
         return result
 
+
 @dataclass
 class FlightInfo:
     """Class for the Swedavia FlightInfo API, containing list of Flight objects and a token."""
-    flights: List[Flight]
+
+    flights: list[Flight]
     continuationtoken: str
 
-    def __init__(self: any, flights: List[Flight], continuationtoken: str) -> None:
+    def __init__(self: Any, flights: list[Flight], continuationtoken: str) -> None:
         self.flights = flights
         self.continuationtoken = continuationtoken
 
@@ -474,7 +510,7 @@ class FlightInfo:
         continuationtoken = from_str(obj.get("continuationtoken"))
         return FlightInfo(flights, continuationtoken)
 
-    def to_dict(self: any) -> dict:
+    def to_dict(self: Any) -> dict:
         """Add FlightInfo data to dict item."""
         result: dict = {}
         result["flights"] = from_list(lambda x: to_class(Flight, x), self.flights)
@@ -493,6 +529,7 @@ def flight_info_to_dict(x: FlightInfo) -> dict:
 @dataclass
 class WaitTime:
     """Class for Swedavia WaitTime API."""
+
     id_: int
     queue_name: str
     current_time: datetime
@@ -504,7 +541,7 @@ class WaitTime:
     overflow: bool
 
     def __init__(
-        self: any,
+        self: Any,
         id_: str,
         queue_name: str,
         current_time: datetime,
@@ -527,11 +564,13 @@ class WaitTime:
 
     @staticmethod
     def from_dict(d: dict) -> "WaitTime":
-        """"Returns WaitTime object."""
+        """ "Returns WaitTime object."""
         return WaitTime(
             d.get("id"),
             d.get("queueName"),
-            datetime.strptime(d.get("currentTime"), "%Y-%m-%dT%H:%M:%SZ").strftime("%Y-%m-%d %H:%M:%S"),
+            datetime.strptime(d.get("currentTime"), "%Y-%m-%dT%H:%M:%SZ")
+            .astimezone(pytz.timezone("CET"))
+            .strftime("%Y-%m-%d %H:%M:%S"),
             d.get("currentProjectedWaitTime"),
             d.get("isFastTrack"),
             d.get("terminal"),
@@ -540,7 +579,7 @@ class WaitTime:
             d.get("overflow"),
         )
 
-    def to_dict(self: any) -> dict:
+    def to_dict(self: Any) -> dict:
         """Return WaitTime data as dict item."""
         return {
             "id": self.id_,
@@ -558,10 +597,13 @@ class WaitTime:
 @dataclass
 class FlightAndWaitTime:
     """Combined class of FlightInfo (currently only Departure flights) and WaitTime."""
-    flight_info: List[Departure]  # Change the type to a list of Departure
-    wait_info: List[WaitTime]
 
-    def __init__(self: any, flight_info: List[Departure], wait_info: List[WaitTime]) -> None:
+    flight_info: list[Departure]  # Change the type to a list of Departure
+    wait_info: list[WaitTime]
+
+    def __init__(
+        self: Any, flight_info: list[Departure], wait_info: list[WaitTime]
+    ) -> None:
         self.flight_info = flight_info
         self.wait_info = wait_info
 
@@ -573,9 +615,11 @@ class FlightAndWaitTime:
         wait_info = from_list(WaitTime.from_dict, obj.get("wait_info"))
         return FlightAndWaitTime(flight_info, wait_info)
 
-    def to_dict(self: any) -> dict:
+    def to_dict(self: Any) -> dict:
         """Add FlightAndWaitTime data to dict item."""
         result: dict = {}
-        result["flight_info"] = from_list(lambda x: to_class(Departure, x), self.flight_info)
+        result["flight_info"] = from_list(
+            lambda x: to_class(Departure, x), self.flight_info
+        )
         result["wait_info"] = from_list(lambda x: to_class(WaitTime, x), self.wait_info)
         return result

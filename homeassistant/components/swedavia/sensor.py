@@ -54,7 +54,7 @@ class SWRequiredKeysMixin:
 
     key: str
     title: str
-    icon: str
+    image: str
     value_fn: Callable[[FlightAndWaitTime], StateType | datetime]
 
 
@@ -67,25 +67,25 @@ SENSOR_TYPES: tuple[SWSensorEntityDescription, ...] = (
     SWSensorEntityDescription(
         key="wait_time",
         title="Projected Wait Time",
-        icon="mdi:airplane-clock",
+        image="mdi:airplane-clock",
         value_fn=lambda data: data.wait_info[0].current_projected_wait_time,
     ),
     SWSensorEntityDescription(
         key="current_time",
         title="Current Time",
-        icon="mdi:clock",
+        image="mdi:clock",
         value_fn=lambda data: data.wait_info[0].current_time,
     ),
     SWSensorEntityDescription(
         key="flight_id",
         title="Flight ID",
-        icon="mdi:airplane",
+        image="mdi:airplane",
         value_fn=lambda data: data.flight_info[0].flight_id,
     ),
     SWSensorEntityDescription(
         key="departure_time",
         title="Departure Time",
-        icon="mdi:airplane",
+        image="mdi:airplane",
         value_fn=lambda data: data.flight_info[0].departure_time,
     ),
 )
@@ -122,7 +122,7 @@ class SwedaviaFlightandWaitTimeInfoSensor(
     _attr_icon = "mdi:airplane"
     _state = "Placeholder state"
 
-    def __init__(
+    def __init__( # noqa
         self: Any,
         coordinator: SwedaviaDataUpdateCoordinator,
         flight_number: str,
@@ -133,7 +133,7 @@ class SwedaviaFlightandWaitTimeInfoSensor(
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
-        self._attr_icon = description.icon
+        self._attr_icon = description.image
         self._state = super().state
         self.description = description
         self._attr_unique_id = f"{entry_id}--{description.key}"

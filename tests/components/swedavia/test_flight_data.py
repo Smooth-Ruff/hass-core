@@ -31,7 +31,7 @@ from homeassistant.components.swedavia.flight_data import Flight, WaitTime
         },
     ],
 )
-def test_wait_info(raw_wait_info: dict):
+def test_wait_info(raw_wait_info: dict) -> None:
     """Test parsing wait info data."""
     wait_info_object = WaitTime.from_dict(raw_wait_info)
     result = WaitTime.to_dict(wait_info_object)
@@ -83,7 +83,7 @@ def test_wait_info(raw_wait_info: dict):
         }
     ],
 )
-def test_flight_info(raw_flight_info: dict):
+def test_flight_info(raw_flight_info: dict) -> None:
     """Test parsing flight info data."""
     flight_object = Flight.from_dict(raw_flight_info)
 

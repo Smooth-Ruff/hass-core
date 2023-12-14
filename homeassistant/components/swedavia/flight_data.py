@@ -137,7 +137,7 @@ class FlightLegIdentifier:
     departure_airport_icao: str
     arrival_airport_icao: str
 
-    def __init__(
+    def __init__( # noqa
         self: Any,
         callsign: str,
         flight_id: str,
@@ -251,7 +251,7 @@ class Arrival:
     via_destinations: list[Any]
     di_indicator: str
 
-    def __init__(
+    def __init__( # noqa
         self: Any,
         flight_id: str,
         departure_airport_swedish: str,
@@ -357,7 +357,7 @@ class Departure:
     remarks_swedish: list[Any]
     di_indicator: str
 
-    def __init__(
+    def __init__( # noqa
         self: Any,
         flight_id: str,
         arrival_airport_swedish: str,
@@ -540,7 +540,7 @@ class WaitTime:
     longitude: float
     overflow: bool
 
-    def __init__(
+    def __init__( # noqa
         self: Any,
         id_: str,
         queue_name: str,

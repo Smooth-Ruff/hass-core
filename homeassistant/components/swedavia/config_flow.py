@@ -1,3 +1,5 @@
+"""Handles the Swedavia integration setup from config entries."""
+
 from typing import Any
 import voluptuous as vol
 from homeassistant import config_entries

@@ -12,7 +12,6 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import DOMAIN, CONF_WAIT_TIME_APIKEY, CONF_FLIGHTINFO_APIKEY
-from .util import fill_date
 from .flight_data import Departure, FlightAndWaitTime, WaitTime
 from .swedavia_wrapper import (
     SwedaviaWrapper,
@@ -30,7 +29,7 @@ TIME_BETWEEN_UPDATES = timedelta(minutes=5)
 class SwedaviaDataUpdateCoordinator(DataUpdateCoordinator[FlightAndWaitTime]):
     """A Swedavia Data Update Coordinator."""
 
-    def __init__(
+    def __init__( # noqa
         self: SwedaviaDataUpdateCoordinator,
         hass: HomeAssistant,
         entry: ConfigEntry,
@@ -55,7 +54,7 @@ class SwedaviaDataUpdateCoordinator(DataUpdateCoordinator[FlightAndWaitTime]):
         self.flight_number: str = flight_number
 
         self.hass = hass
-        self._date: str = fill_date(date)
+        self._date: str = date
 
     async def _async_update_data(
         self: SwedaviaDataUpdateCoordinator,

@@ -1,3 +1,5 @@
+"""Handles calls to the Swedavia APIs"""
+
 import aiohttp
 
 from typing import Any
